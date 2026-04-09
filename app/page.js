@@ -1,4 +1,4 @@
-import { getNoticias, getCategorias, getAnuncios } from '@/lib/supabase'
+import { getNoticias, getCategorias, getAnuncios, getFirmas, getRedesSociales } from '@/lib/supabase'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -25,16 +25,20 @@ export default async function Home({ searchParams }) {
     adsError = error?.message || 'Error al cargar anuncios'
   }
 
-  const [{ data: noticias, count: totalNoticias }, categoriesData] = await Promise.all([
+  const [{ data: noticias, count: totalNoticias }, categoriesData, firmasData, redesData] = await Promise.all([
     getNoticias({ 
       categoriaSlug: categoria, 
       search: busqueda,
       limit: 20 
     }),
     getCategorias(),
+    getFirmas(),
+    getRedesSociales()
   ])
 
   const categorias = categoriesData || []
+  const firmas = firmasData || []
+  const redes = redesData || []
 
   const noticiasDestacadas = noticias?.filter(n => n.destacado) || []
   const noticiaPrincipal = noticiasDestacadas[0] || noticias[0]
@@ -46,9 +50,8 @@ export default async function Home({ searchParams }) {
       <CategoriaSection categories={categorias} activeCategory={categoria} />
       <NewsGrid noticias={otrasNoticias} />
       <PublicidadSection anuncios={anuncios} error={adsError} />
-      <MultimediaSection />
-      <OpinionSection />
-      <SocialSection />
+      <OpinionSection firmas={firmas} />
+      <SocialSection redes={redes} />
     </>
   )
 }
@@ -56,86 +59,65 @@ export default async function Home({ searchParams }) {
 function HeroSection({ noticia }) {
   if (!noticia) {
     return (
-      <section className="mb-16">
-        <div className="relative group overflow-hidden rounded-2xl bg-gradient-to-br from-stone-100 to-stone-200 shadow-xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5"></div>
-          <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/10 rounded-full blur-3xl"></div>
-          <div className="flex flex-col lg:flex-row min-h-[500px] relative z-10">
-            <div className="lg:w-2/3 relative h-80 lg:h-auto bg-gradient-to-br from-stone-200 to-stone-300">
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/30"></div>
-            </div>
-            <div className="lg:w-1/3 p-8 lg:p-12 flex flex-col justify-center bg-white/80 backdrop-blur-sm border-l border-stone-200/50">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full mb-4">
-                <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
-                <span className="text-primary font-semibold text-xs uppercase tracking-wider">Cargando...</span>
-              </div>
-              <h1 className="font-headline text-3xl lg:text-4xl font-black text-stone-900 leading-tight mb-4">
-                Bienvenido a <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">GaamaTV</span>
-              </h1>
-              <p className="text-stone-500 text-lg leading-relaxed">
-                El Lens Editorial del Oriente Antioqueño
-              </p>
-            </div>
-          </div>
-        </div>
+      <section className="mb-16 animate-pulse">
+        <div className="w-full h-[60vh] bg-stone-200 rounded-sm"></div>
       </section>
     )
   }
 
+  const dateStr = noticia.fecha_publicacion ? new Date(noticia.fecha_publicacion).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+
   return (
-    <section className="mb-16">
-      <Link href={`/noticia/${noticia.slug}`} className="block group">
-        <div className="relative overflow-hidden rounded-2xl bg-white shadow-xl shadow-stone-300/50 transition-all duration-500 hover:shadow-2xl hover:shadow-stone-400/30 hover:-translate-y-1">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-          <div className="flex flex-col lg:flex-row min-h-[400px] lg:min-h-[500px] relative z-10">
-            <div className="lg:w-2/3 relative h-72 sm:h-80 md:h-[450px] lg:h-auto overflow-hidden">
-              {noticia.imagen_principal ? (
-                <img
-                  src={noticia.imagen_principal}
-                  alt={noticia.titulo}
-                  className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
-                />
-              ) : (
-                <img
-                  src={PLACEHOLDER_IMAGES.hero}
-                  alt={noticia.titulo}
-                  className="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
-                />
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-black/10 lg:to-black/30"></div>
-              <div className="absolute bottom-6 left-6 lg:hidden">
-                <span className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-secondary text-white text-xs font-bold px-4 py-2 rounded-full uppercase tracking-widest shadow-lg">
-                  <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                  {noticia.categoria?.nombre || 'Noticias'}
-                </span>
-              </div>
-              <div className="absolute top-6 left-6 hidden lg:flex items-center gap-3">
-                <span className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm text-stone-900 text-xs font-bold px-4 py-2 rounded-full uppercase tracking-widest shadow-lg">
-                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                  Destacado
-                </span>
-              </div>
+    <section className="mb-16 border-b border-stone-200 pb-12 pt-4">
+      <Link href={`/noticia/${noticia.slug}`} className="group block relative">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          {/* Text Content */}
+          <div className="lg:col-span-5 order-2 lg:order-1 flex flex-col justify-center">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-white bg-primary font-bold text-[10px] uppercase tracking-widest px-3 py-1 shadow-sm">
+                {noticia.categoria?.nombre || 'General'}
+              </span>
+              <span className="text-stone-500 text-xs font-bold uppercase tracking-widest flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">schedule</span>
+                {dateStr}
+              </span>
             </div>
-            <div className="lg:w-1/3 p-8 lg:p-12 flex flex-col justify-center bg-white/95 backdrop-blur-sm border-l border-stone-200/50 group-hover:border-primary/20 transition-colors duration-300">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-secondary font-bold text-xs uppercase tracking-[0.2em] bg-secondary/10 px-3 py-1 rounded-full">
-                  {noticia.categoria?.nombre || 'Noticias'}
-                </span>
-              </div>
-              <h1 className="font-headline text-3xl lg:text-4xl xl:text-5xl font-black text-stone-900 leading-[1.1] mb-4 lg:mb-6 tracking-tight group-hover:text-primary transition-colors duration-300">
-                {noticia.titulo}
-              </h1>
-              <p className="text-stone-500 text-base lg:text-lg leading-relaxed mb-6 lg:mb-8 font-light italic line-clamp-3">
-                {noticia.excerpt || noticia.contenido?.substring(0, 200)}
-              </p>
-              <div className="flex items-center gap-4">
-                <span className="group/btn inline-flex items-center gap-2 bg-gradient-to-r from-primary to-secondary text-white px-6 lg:px-8 py-3 rounded-full font-semibold shadow-lg shadow-primary/30 transition-all duration-300 hover:shadow-xl hover:shadow-primary/40 hover:scale-105">
-                  Leer más
-                  <span className="material-symbols-outlined text-sm transition-transform group-hover/btn:translate-x-1">arrow_forward</span>
-                </span>
+            
+            <h1 className="font-headline text-5xl lg:text-6xl xl:text-7xl font-black text-stone-900 leading-[1.05] tracking-tight mb-6 group-hover:text-primary transition-colors duration-300">
+              {noticia.titulo}
+            </h1>
+            
+            <p className="text-stone-600 text-xl leading-relaxed mb-8 font-serif line-clamp-3">
+              {noticia.excerpt || noticia.contenido?.substring(0, 250) || 'Descubre la información más reciente sobre este acontecimiento vital para el Oriente Antioqueño.'}
+            </p>
+            
+            <div className="flex items-center gap-4">
+               <span className="inline-flex items-center justify-center gap-2 font-bold text-xs uppercase tracking-widest text-white bg-stone-900 px-6 py-4 rounded-full group-hover:bg-primary group-hover:shadow-lg group-hover:-translate-y-1 transition-all duration-300">
+                 Leer reportaje
+                 <span className="material-symbols-outlined text-sm">east</span>
+               </span>
+               {noticia.autor?.nombre && (
+                 <div className="flex flex-col">
+                   <span className="text-[9px] text-stone-400 font-bold uppercase tracking-widest">Por</span>
+                   <span className="text-xs font-bold text-stone-900">{noticia.autor.nombre}</span>
+                 </div>
+               )}
+            </div>
+          </div>
+          
+          {/* Image Content */}
+          <div className="lg:col-span-7 order-1 lg:order-2">
+            <div className="relative aspect-[4/3] lg:aspect-[16/10] overflow-hidden rounded-2xl shadow-2xl">
+              <img
+                src={noticia.imagen_principal || PLACEHOLDER_IMAGES.hero}
+                alt={noticia.titulo}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1.5s] border border-stone-100 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm text-stone-900 text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+                <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
+                Portada
               </div>
             </div>
           </div>
@@ -147,51 +129,32 @@ function HeroSection({ noticia }) {
 
 function CategoriaSection({ categories, activeCategory }) {
   return (
-    <section className="mb-8">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-1 h-8 bg-gradient-to-b from-primary to-secondary rounded-full"></div>
-          <h2 className="font-headline text-2xl lg:text-3xl font-bold text-stone-900">
-            Oriente Actual
-          </h2>
-        </div>
-        <div className="hidden sm:flex items-center gap-2 text-stone-500 text-sm">
-          <span className="material-symbols-outlined text-lg">trending_up</span>
-          <span className="font-medium">Noticias en tendencia</span>
-        </div>
+    <section className="mb-12">
+      <div className="flex items-center justify-between mb-6 border-b-2 border-stone-900 pb-3">
+        <h2 className="font-headline text-3xl font-black text-stone-900 uppercase tracking-tight">
+          {activeCategory 
+            ? categories.find(c => c.slug === activeCategory)?.nombre || 'Sección' 
+            : 'Últimas Noticias'}
+        </h2>
       </div>
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-x-8 gap-y-3">
         <Link 
           href="/"
-          className={`group relative px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${
-            !activeCategory 
-              ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg shadow-primary/30' 
-              : 'bg-white text-stone-600 hover:bg-stone-50 border border-stone-200 hover:border-primary/30 hover:shadow-md'
+          className={`text-sm font-black uppercase tracking-widest transition-colors hover:text-primary ${
+            !activeCategory ? 'text-primary border-b-2 border-primary pb-1' : 'text-stone-400'
           }`}
         >
-          {!activeCategory && (
-            <span className="absolute inset-0 bg-white/20 rounded-full animate-pulse"></span>
-          )}
-          <span className="relative flex items-center gap-2">
-            {!activeCategory && <span className="material-symbols-outlined text-xs">home</span>}
-            Todas
-          </span>
+          Portada General
         </Link>
         {categories?.map((cat) => (
           <Link
             key={cat.id}
             href={`/?categoria=${cat.slug}`}
-            className={`group relative px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 ${
-              activeCategory === cat.slug
-                ? 'bg-gradient-to-r from-primary to-secondary text-white shadow-lg shadow-primary/30'
-                : 'bg-white text-stone-600 hover:bg-stone-50 border border-stone-200 hover:border-primary/30 hover:shadow-md'
+            className={`text-sm font-black uppercase tracking-widest transition-colors hover:text-primary ${
+              activeCategory === cat.slug ? 'text-primary border-b-2 border-primary pb-1' : 'text-stone-400'
             }`}
           >
-            <span className="relative flex items-center gap-2">
-              {activeCategory === cat.slug && <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>}
-              {cat.nombre}
-            </span>
-            <span className={`absolute inset-0 rounded-full bg-white/0 group-hover:bg-primary/5 transition-colors duration-300 ${activeCategory === cat.slug ? 'hidden' : ''}`}></span>
+            {cat.nombre}
           </Link>
         ))}
       </div>
@@ -202,95 +165,89 @@ function CategoriaSection({ categories, activeCategory }) {
 function NewsGrid({ noticias }) {
   if (!noticias || noticias.length === 0) {
     return (
-      <section className="mb-20">
-        <div className="text-center py-12">
-          <p className="text-on-surface-variant">No hay noticias disponibles.</p>
-        </div>
+      <section className="mb-20 text-center py-12 border-y border-stone-200">
+        <p className="text-stone-500 italic font-serif text-lg">No hay publicaciones recientes en esta sección.</p>
       </section>
     )
   }
 
   const mainNews = noticias[0]
-  const sideNews = noticias.slice(1, 3)
-  const otherNews = noticias.slice(3)
+  const sideNews = noticias.slice(1, 6) // Show up to 5 on the side
+  const otherNews = noticias.slice(6)
 
   return (
-    <section className="mb-20">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        <MainNewsCard noticia={mainNews} />
-        <SideNewsList noticias={sideNews} />
+    <section className="mb-16">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mb-16">
+        <div className="lg:col-span-8 flex flex-col">
+          <div className="flex items-center gap-3 border-b-2 border-stone-900 pb-2 mb-6">
+             <span className="material-symbols-outlined text-stone-900 text-[22px]">auto_stories</span>
+             <h3 className="font-headline text-2xl font-black text-stone-900 uppercase tracking-tight">
+               A Fondo
+             </h3>
+          </div>
+          <MainNewsCard noticia={mainNews} />
+        </div>
+        <div className="lg:col-span-4 flex flex-col lg:border-l lg:border-stone-200 lg:pl-8">
+          <div className="flex items-center gap-3 border-b-2 border-primary pb-2 mb-4">
+             <div className="w-2.5 h-2.5 bg-primary rounded-sm animate-pulse"></div>
+             <h3 className="font-headline text-2xl font-black text-stone-900 uppercase tracking-tight">
+               Lo último
+             </h3>
+          </div>
+          <SideNewsList noticias={sideNews} />
+        </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-        {otherNews.map((noticia) => (
-          <NewsCard key={noticia.id} noticia={noticia} />
-        ))}
-      </div>
+      
+      {otherNews.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10 pt-10 border-t border-stone-200">
+          {otherNews.map((noticia) => (
+            <NewsCard key={noticia.id} noticia={noticia} />
+          ))}
+        </div>
+      )}
     </section>
   )
 }
 
 function MainNewsCard({ noticia }) {
   if (!noticia) return null
+  
+  const dateStr = noticia.fecha_publicacion ? new Date(noticia.fecha_publicacion).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }) : ''
 
   return (
-    <Link href={`/noticia/${noticia.slug}`} className="md:col-span-8 group">
-      <div className="bg-white rounded-2xl shadow-lg shadow-stone-200/50 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-stone-300/50 hover:-translate-y-1">
-        <div className="flex flex-col md:flex-row">
-          <div className="md:w-1/2 relative overflow-hidden aspect-video md:aspect-auto">
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            {noticia.imagen_principal ? (
-              <img
-                className="w-full h-full md:absolute md:inset-0 object-cover transition-transform duration-500 group-hover:scale-110"
-                alt={noticia.titulo}
-                src={noticia.imagen_principal}
-              />
-            ) : (
-              <img
-                className="w-full h-56 sm:h-72 object-cover transition-transform duration-500 group-hover:scale-110"
-                alt={noticia.titulo}
-                src={PLACEHOLDER_IMAGES.news}
-              />
-            )}
-            <div className="absolute top-4 left-4">
-              <span className="inline-flex items-center gap-1.5 bg-white/90 backdrop-blur-sm text-stone-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
-                <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
-                {noticia.categoria?.nombre}
-              </span>
-            </div>
-          </div>
-          <div className="md:w-1/2 p-6 sm:p-8 flex flex-col justify-between bg-gradient-to-br from-white to-stone-50/50">
-            <div>
-              <div className="flex items-center gap-2 text-xs text-stone-400 mb-3 font-medium">
-                <span className="material-symbols-outlined text-sm">schedule</span>
-                {noticia.fecha_publicacion && new Date(noticia.fecha_publicacion).toLocaleDateString('es-CO', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric'
-                })}
-                {noticia.autor?.nombre && (
-                  <>
-                    <span className="text-stone-300">•</span>
-                    <span className="text-primary">{noticia.autor.nombre}</span>
-                  </>
-                )}
-              </div>
-              <h3 className="font-headline text-xl sm:text-2xl lg:text-3xl font-bold text-stone-900 mb-4 group-hover:text-primary transition-colors duration-300 leading-tight">
-                {noticia.titulo}
-              </h3>
-              <p className="text-stone-500 text-sm sm:text-base line-clamp-3 leading-relaxed">
-                {noticia.excerpt || noticia.contenido?.substring(0, 150)}
-              </p>
-            </div>
-            <div className="mt-6 flex items-center justify-between">
-              <span className="inline-flex items-center gap-2 text-primary font-semibold text-sm group-hover:gap-3 transition-all duration-300">
-                Leer artículo
-                <span className="material-symbols-outlined text-lg">arrow_forward</span>
-              </span>
-              <span className="text-stone-300 text-xs font-medium">
-                {noticia.titulo?.split(' ').length} palabras
-              </span>
-            </div>
-          </div>
+    <Link href={`/noticia/${noticia.slug}`} className="group block">
+      <div className="relative overflow-hidden aspect-video sm:aspect-[16/8] rounded-2xl shadow-lg mb-6">
+        <img
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+          alt={noticia.titulo}
+          src={noticia.imagen_principal || PLACEHOLDER_IMAGES.news}
+        />
+        <div className="absolute inset-0 bg-stone-900/10 group-hover:bg-transparent transition-colors"></div>
+        <div className="absolute top-4 left-4">
+          <span className="bg-white/95 backdrop-blur-sm text-stone-900 border border-stone-100 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-sm">
+            {noticia.categoria?.nombre || 'Actualidad'}
+          </span>
+        </div>
+      </div>
+      
+      <div className="px-1">
+        <h3 className="font-headline text-3xl sm:text-4xl font-black text-stone-900 mb-4 group-hover:text-primary transition-colors duration-300 leading-tight tracking-tight">
+          {noticia.titulo}
+        </h3>
+        <p className="text-stone-600 font-serif line-clamp-3 mb-6 text-lg">
+           {noticia.excerpt || noticia.contenido?.substring(0, 180) || 'Descubre los detalles de la noticia a continuación...'}
+        </p>
+        <div className="flex items-center gap-3 text-xs text-stone-500 font-bold uppercase tracking-widest">
+           {noticia.autor?.nombre && (
+             <>
+               <span className="text-stone-900 bg-stone-100 px-3 py-1 rounded-full">{noticia.autor.nombre}</span>
+               <span className="w-1 h-1 bg-stone-300 rounded-full"></span>
+             </>
+           )}
+           <span className="flex items-center gap-1">
+             <span className="material-symbols-outlined text-[14px]">event</span>
+             {dateStr}
+           </span>
         </div>
       </div>
     </Link>
@@ -299,62 +256,60 @@ function MainNewsCard({ noticia }) {
 
 function SideNewsList({ noticias }) {
   return (
-    <div className="md:col-span-4 space-y-4 sm:space-y-6">
-      {noticias.map((noticia) => (
-        <NewsCard key={noticia.id} noticia={noticia} horizontal />
-      ))}
+    <div className="flex flex-col">
+      {noticias.map((noticia, i) => {
+        const dateStr = noticia.fecha_publicacion ? new Date(noticia.fecha_publicacion).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }) : ''
+        return (
+          <Link href={`/noticia/${noticia.slug}`} key={noticia.id} className="group flex gap-4 items-start py-5 border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors -mx-4 px-4 rounded-xl">
+             <div className="font-headline text-4xl font-black text-stone-200 group-hover:text-primary transition-colors italic w-8 text-center shrink-0">
+                {i + 1}
+             </div>
+             <div className="flex-1 flex flex-col justify-center">
+                <span className="text-secondary text-[9px] font-bold uppercase tracking-widest block mb-1">
+                  {noticia.categoria?.nombre || 'Actualidad'}
+                </span>
+                <h4 className="font-headline font-bold text-stone-900 leading-snug lg:text-lg mb-2 group-hover:text-primary transition-colors">
+                  {noticia.titulo}
+                </h4>
+                <div className="flex items-center gap-2 text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-auto">
+                   <span>{dateStr}</span>
+                </div>
+             </div>
+          </Link>
+        )
+      })}
     </div>
   )
 }
 
 function NewsCard({ noticia, horizontal = false }) {
+  const dateStr = noticia.fecha_publicacion ? new Date(noticia.fecha_publicacion).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }) : ''
+  
   return (
-    <Link href={`/noticia/${noticia.slug}`} className={`group ${horizontal ? 'block' : ''}`}>
-      <div className={`bg-white rounded-xl overflow-hidden shadow-md shadow-stone-200/40 transition-all duration-300 hover:shadow-lg hover:shadow-stone-300/50 hover:-translate-y-1 ${horizontal ? 'p-3' : ''}`}>
-        <div className={horizontal ? 'flex gap-4' : ''}>
-          <div className={`relative overflow-hidden rounded-lg ${horizontal ? 'w-28 h-24 flex-shrink-0' : 'aspect-video mb-3'}`}>
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-secondary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            {noticia.imagen_principal ? (
-              <img
-                className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110`}
-                alt={noticia.titulo}
-                src={noticia.imagen_principal}
-              />
-            ) : (
-              <img
-                className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110`}
-                alt={noticia.titulo}
-                src={PLACEHOLDER_IMAGES.news}
-              />
-            )}
-            {!horizontal && (
-              <div className="absolute top-3 left-3">
-                <span className="inline-flex items-center gap-1 bg-white/90 backdrop-blur-sm text-stone-900 text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
-                  {noticia.categoria?.nombre}
-                </span>
-              </div>
-            )}
+    <Link href={`/noticia/${noticia.slug}`} className="group block">
+      <div className={horizontal ? 'flex gap-4 items-center sm:items-start' : 'flex flex-col gap-4'}>
+        <div className={`relative overflow-hidden rounded-xl shadow-sm ${horizontal ? 'w-24 h-24 sm:w-32 sm:aspect-video sm:h-auto shrink-0' : 'aspect-video'}`}>
+          <img
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            alt={noticia.titulo}
+            src={noticia.imagen_principal || PLACEHOLDER_IMAGES.news}
+          />
+        </div>
+        <div className={horizontal ? 'flex-1 min-w-0 flex flex-col justify-center' : ''}>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-primary text-[9px] font-bold uppercase tracking-widest">
+              {noticia.categoria?.nombre || 'Actualidad'}
+            </span>
           </div>
-          <div className={horizontal ? 'flex-1 min-w-0' : ''}>
-            {horizontal && (
-              <span className="inline-flex items-center gap-1 text-secondary text-[10px] font-bold uppercase mb-1">
-                <span className="w-1 h-1 bg-secondary rounded-full"></span>
-                {noticia.categoria?.nombre}
-              </span>
-            )}
-            <h4 className="font-headline text-sm sm:text-base font-bold text-stone-900 group-hover:text-primary transition-colors duration-300 leading-snug line-clamp-2">
-              {noticia.titulo}
-            </h4>
-            {horizontal && (
-              <div className="mt-2 flex items-center gap-2 text-xs text-stone-400">
-                <span className="material-symbols-outlined text-xs">schedule</span>
-                {noticia.fecha_publicacion && new Date(noticia.fecha_publicacion).toLocaleDateString('es-CO', {
-                  day: 'numeric',
-                  month: 'short'
-                })}
-              </div>
-            )}
-          </div>
+          <h4 className={`font-headline font-black text-stone-900 group-hover:text-primary transition-colors leading-snug line-clamp-3 ${horizontal ? 'text-sm sm:text-base' : 'text-xl mb-3'} tracking-tight`}>
+            {noticia.titulo}
+          </h4>
+          {!horizontal && (
+             <div className="text-[10px] text-stone-400 font-bold uppercase tracking-widest flex items-center gap-1">
+               <span className="material-symbols-outlined text-[12px]">schedule</span>
+               {dateStr}
+             </div>
+          )}
         </div>
       </div>
     </Link>
@@ -401,16 +356,14 @@ function PublicidadSection({ anuncios, error }) {
   }
 
   return (
-    <section className="mb-16">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-1 h-8 bg-gradient-to-b from-amber-500 to-amber-600 rounded-full"></div>
-        <h2 className="font-headline text-xl lg:text-2xl font-bold text-stone-900">
-          Negocios Locales
+    <section className="mb-16 border-y border-stone-200 py-10 bg-stone-50 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-12 lg:px-12">
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="font-headline text-lg font-black text-stone-900 uppercase tracking-widest border-l-4 border-amber-500 pl-3">
+          Publicidad Institucional
         </h2>
-        <span className="text-xs text-stone-400 ml-auto">Publicidad</span>
       </div>
       {error && isDev && (
-        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-700 text-sm">
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-700 text-sm">
           <span className="font-semibold">Nota de desarrollo:</span> {error}
         </div>
       )}
@@ -421,43 +374,33 @@ function PublicidadSection({ anuncios, error }) {
             href={anuncio.enlace_url || '#'}
             target={anuncio.isPlaceholder ? '_self' : '_blank'}
             rel="noopener noreferrer"
-            className={`group relative overflow-hidden rounded-2xl bg-white shadow-lg shadow-stone-200/50 hover:shadow-xl hover:shadow-stone-300/50 transition-all duration-300 hover:-translate-y-1 ${anuncio.isPlaceholder ? 'opacity-75' : ''}`}
+            className={`group flex flex-col bg-white border border-stone-200 hover:border-amber-400 hover:shadow-lg transition-all duration-300 ${anuncio.isPlaceholder ? 'opacity-75' : ''}`}
           >
-            <div className="relative h-40 sm:h-48 overflow-hidden">
-              {anuncio.imagen_url ? (
-                <img
-                  src={anuncio.imagen_url}
+            <div className="relative h-48 overflow-hidden">
+               <img
+                  src={anuncio.imagen_url || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop'}
                   alt={anuncio.titulo}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-amber-100 to-stone-200 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-4xl text-amber-300">storefront</span>
-                </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
-              <div className="absolute top-3 right-3">
-                <span className={`inline-flex items-center gap-1 ${anuncio.isPlaceholder ? 'bg-stone-400/90' : 'bg-amber-500/90'} backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-full`}>
-                  <span className="material-symbols-outlined text-[10px]">campaign</span>
-                  {anuncio.isPlaceholder ? 'Espacio disponible' : 'Publicidad'}
+              <div className="absolute top-2 right-2">
+                <span className={`bg-black/80 text-white text-[9px] font-bold uppercase tracking-widest px-2 py-0.5`}>
+                  {anuncio.isPlaceholder ? 'Espacio Disponible' : 'Anuncio'}
                 </span>
               </div>
             </div>
-            <div className="p-5">
-              <h3 className="font-headline text-lg font-bold text-stone-900 mb-2 group-hover:text-amber-600 transition-colors duration-300 line-clamp-1">
+            <div className="p-5 flex-1 flex flex-col">
+              <h3 className="font-headline text-lg font-bold text-stone-900 mb-2 group-hover:text-amber-600 transition-colors duration-300">
                 {anuncio.titulo}
               </h3>
-              <p className="text-stone-500 text-sm leading-relaxed line-clamp-2 mb-4">
+              <p className="text-stone-600 font-serif text-sm leading-relaxed mb-4 flex-1">
                 {anuncio.descripcion_corta}
               </p>
               {anuncio.boton_texto && (
-                <span className="inline-flex items-center gap-2 text-amber-600 font-semibold text-sm group-hover:gap-3 transition-all duration-300">
-                  {anuncio.boton_texto}
-                  <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                <span className="uppercase text-[11px] font-bold tracking-widest text-amber-600 group-hover:text-amber-700 mt-auto flex items-center gap-1">
+                  {anuncio.boton_texto} <span className="material-symbols-outlined text-sm">arrow_outward</span>
                 </span>
               )}
             </div>
-            <div className="absolute inset-0 rounded-2xl ring-1 ring-stone-100 group-hover:ring-amber-500/30 transition-all duration-300"></div>
           </a>
         ))}
       </div>
@@ -465,153 +408,74 @@ function PublicidadSection({ anuncios, error }) {
   )
 }
 
-function MultimediaSection() {
+
+function OpinionSection({ firmas }) {
   return (
-    <section className="mb-20 py-12 sm:py-16 px-6 sm:px-8 bg-gradient-to-br from-stone-900 via-stone-900 to-stone-800 text-white rounded-2xl relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-secondary/10 rounded-full blur-3xl"></div>
-      <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-        <span className="material-symbols-outlined text-[8rem] sm:text-[12rem]">videocam</span>
-      </div>
-      <div className="relative z-10 flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
-        <div className="lg:w-2/5">
-          <div className="flex items-center gap-3 mb-4 sm:mb-6">
-            <span className="w-3 h-3 bg-red-600 rounded-full animate-pulse"></span>
-            <span className="font-bold tracking-widest uppercase text-xs bg-red-600/20 text-red-400 px-3 py-1 rounded-full">En Vivo</span>
+    <section className="mb-16">
+      <h2 className="text-center font-headline text-2xl sm:text-3xl font-black text-stone-900 border-y-2 border-stone-900 py-4 mb-10 uppercase tracking-[0.2em]">
+        Firmas y Opinión
+      </h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-0 lg:px-12">
+        {firmas && firmas.length > 0 ? (
+          firmas.map((firma) => (
+            <div key={firma.id} className="flex flex-col items-center text-center group">
+              <img 
+                className="w-24 h-24 rounded-full object-cover grayscale group-hover:grayscale-0 border-2 border-stone-200 group-hover:border-primary transition-all duration-500 mb-4" 
+                alt={firma.nombre} 
+                src={firma.imagen_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face'} 
+              />
+              <h4 className="font-bold text-stone-900 text-sm uppercase tracking-widest mb-1">{firma.nombre}</h4>
+              <p className="text-primary text-[10px] font-bold uppercase tracking-widest mb-4">{firma.rol}</p>
+              <a className="font-headline text-lg sm:text-xl font-black italic text-stone-800 group-hover:text-primary transition-colors leading-snug" href="#">
+                &ldquo;{firma.cita}&rdquo;
+              </a>
+            </div>
+          ))
+        ) : (
+          <div className="col-span-3 text-center text-stone-500 py-8 italic">No hay firmas configuradas aún.</div>
+        )}
+        
+        {/* Placeholder Tu Firma a la derecha, pero solo si no colapsa, lo ponemos al final */}
+        <div className="flex flex-col items-center text-center group hidden lg:flex">
+          <div className="w-24 h-24 rounded-full bg-stone-100 flex items-center justify-center border-2 border-dashed border-stone-300 group-hover:border-primary transition-colors duration-500 mb-4 text-stone-400 group-hover:text-primary">
+            <span className="material-symbols-outlined text-3xl">edit</span>
           </div>
-          <h2 className="font-headline text-3xl sm:text-4xl lg:text-5xl font-black mb-6 lg:mb-8 italic">
-            GaamaTV: <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">La voz del territorio.</span>
-          </h2>
-          <p className="text-stone-400 text-base lg:text-lg mb-6 lg:mb-8 leading-relaxed">
-            No te pierdas nuestra edición estelar con los reportajes exclusivos que definen el acontecer diario de nuestra región.
-          </p>
-          <div className="space-y-3 sm:space-y-4">
-            <a className="flex items-center gap-4 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300 group cursor-pointer border border-white/5 hover:border-white/20" href="https://www.youtube.com/@gaamaproducciones" target="_blank" rel="noopener noreferrer">
-              <span className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-2xl sm:text-3xl text-red-500" style={{ fontVariationSettings: 'FILL 1' }}>play_circle</span>
-              </span>
-              <div className="flex-1">
-                <div className="font-bold text-sm sm:text-base text-white">Ver en YouTube</div>
-                <div className="text-sm text-stone-500">@gaamaproducciones</div>
-              </div>
-              <span className="material-symbols-outlined text-stone-400 group-hover:text-white group-hover:translate-x-1 transition-all">open_in_new</span>
-            </a>
-            <a className="flex items-center gap-4 p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-all duration-300 group cursor-pointer border border-white/5 hover:border-white/20" href="https://www.facebook.com/Gaamaproducciones" target="_blank" rel="noopener noreferrer">
-              <span className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-2xl sm:text-3xl text-blue-500" style={{ fontVariationSettings: 'FILL 1' }}>video_library</span>
-              </span>
-              <div className="flex-1">
-                <div className="font-bold text-sm sm:text-base text-white">Gaama Televisión</div>
-                <div className="text-sm text-stone-500">Facebook Live</div>
-              </div>
-              <span className="material-symbols-outlined text-stone-400 group-hover:text-white group-hover:translate-x-1 transition-all">open_in_new</span>
-            </a>
-          </div>
-        </div>
-        <div className="lg:w-3/5 w-full aspect-video bg-stone-800 rounded-2xl shadow-2xl relative overflow-hidden group border border-white/10 cursor-pointer hover:border-primary/30 transition-colors duration-300">
-          <img className="w-full h-full object-cover opacity-60 transition-transform duration-700 group-hover:scale-105" alt="Studio" src={PLACEHOLDER_IMAGES.studio} />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
-            <button className="w-16 sm:w-18 lg:w-24 h-16 sm:h-18 lg:h-24 rounded-full bg-gradient-to-r from-primary to-secondary text-white flex items-center justify-center shadow-xl shadow-primary/30 hover:shadow-2xl hover:shadow-primary/40 hover:scale-110 active:scale-95 transition-all cursor-pointer">
-              <span className="material-symbols-outlined text-4xl sm:text-5xl lg:text-6xl ml-1" style={{ fontVariationSettings: 'FILL 1' }}>play_arrow</span>
-            </button>
-          </div>
+          <h4 className="font-bold text-stone-900 text-sm uppercase tracking-widest mb-1">Tu Firma</h4>
+          <p className="text-stone-500 text-[10px] font-bold uppercase tracking-widest mb-4">Espacio de Columnistas</p>
+          <a className="font-headline text-lg text-stone-600 transition-colors leading-snug hover:opacity-80" href="#">
+            Envía tus cartas al editor y haz escuchar tu voz en nuestra tribuna abierta.
+          </a>
         </div>
       </div>
     </section>
   )
 }
 
-function OpinionSection() {
-  return (
-    <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 mb-20">
-      <div className="lg:col-span-2">
-        <div className="flex items-center gap-3 mb-6 lg:mb-8">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-            <span className="material-symbols-outlined text-white">forum</span>
-          </div>
-          <div>
-            <h3 className="font-headline text-xl sm:text-2xl font-bold text-stone-900">Tertuliando</h3>
-            <p className="text-xs text-stone-500">Opinión y análisis</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8">
-          <div className="group bg-white rounded-2xl p-5 shadow-lg shadow-stone-200/40 hover:shadow-xl hover:shadow-stone-300/50 transition-all duration-300 hover:-translate-y-1 border border-transparent hover:border-primary/20">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="relative">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 overflow-hidden ring-2 ring-primary/20">
-                  <img className="w-full h-full object-cover" alt="Pedro Castaño" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face" />
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                  <span className="material-symbols-outlined text-white text-[10px]">edit</span>
-                </div>
-              </div>
-              <div>
-                <h4 className="font-bold text-stone-900 text-sm sm:text-base">Pedro Antonio Castaño</h4>
-                <p className="text-xs text-stone-500 italic">Director Editorial</p>
-              </div>
-            </div>
-            <a className="font-headline text-base sm:text-lg font-bold leading-tight text-stone-800 group-hover:text-primary transition-colors cursor-pointer block" href="#">
-              &ldquo;La ética periodística en tiempos de inmediatez digital.&rdquo;
-            </a>
-          </div>
-          <div className="group bg-white rounded-2xl p-5 shadow-lg shadow-stone-200/40 hover:shadow-xl hover:shadow-stone-300/50 transition-all duration-300 hover:-translate-y-1 border border-transparent hover:border-primary/20">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="relative">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-secondary/20 to-primary/20 overflow-hidden ring-2 ring-secondary/20">
-                  <img className="w-full h-full object-cover" alt="Marta Lucía Gil" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face" />
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-secondary rounded-full flex items-center justify-center">
-                  <span className="material-symbols-outlined text-white text-[10px]">article</span>
-                </div>
-              </div>
-              <div>
-                <h4 className="font-bold text-stone-900 text-sm sm:text-base">Marta Lucía Gil</h4>
-                <p className="text-xs text-stone-500 italic">Columnista Invitada</p>
-              </div>
-            </div>
-            <a className="font-headline text-base sm:text-lg font-bold leading-tight text-stone-800 group-hover:text-primary transition-colors cursor-pointer block" href="#">
-              &ldquo;El Oriente: Un laboratorio de paz y productividad.&rdquo;
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-function SocialSection() {
-  const socialLinks = [
-    { platform: 'Instagram', handle: '@gaamatv', url: 'https://www.instagram.com/gaamatv/', color: 'from-purple-500 to-pink-500' },
-    { platform: 'Facebook', handle: 'Pedro Castaño', url: 'https://www.facebook.com/pedro.a.castano/', color: 'from-blue-500 to-blue-600' },
-    { platform: 'Instagram', handle: '@tertuliando.tv', url: 'https://www.instagram.com/tertuliando.tv/', color: 'from-purple-500 to-pink-500' },
-  ]
+function SocialSection({ redes }) {
+  const socialLinks = redes && redes.length > 0 ? redes : []
 
   return (
-    <section className="mb-12">
-      <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-lg shadow-stone-200/50 border border-stone-100">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-stone-900 to-stone-700 flex items-center justify-center">
-            <span className="material-symbols-outlined text-white">share</span>
-          </div>
-          <h3 className="font-headline text-xl sm:text-2xl font-bold text-stone-900">Síguenos</h3>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <section className="mb-0 border-t border-stone-200 pt-8 pb-12">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <h3 className="font-headline text-xl font-black text-stone-900 uppercase tracking-widest border-l-4 border-primary pl-3">
+          Nuestras Redes
+        </h3>
+        <div className="flex flex-wrap items-center gap-4 sm:gap-8 justify-center">
           {socialLinks.map((link, index) => (
             <a 
               key={index} 
-              className="group flex items-center gap-4 p-4 rounded-xl bg-stone-50 hover:bg-white border border-stone-200 hover:border-transparent hover:shadow-lg transition-all duration-300 hover:-translate-y-1" 
+              className="group flex items-center gap-3 hover:text-primary transition-colors" 
               href={link.url} 
               target="_blank" 
               rel="noopener noreferrer"
             >
-              <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${link.color} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform`}>
-                <span className="material-symbols-outlined text-white text-xl">camera</span>
+              <div className="w-10 h-10 border border-stone-200 rounded-full flex items-center justify-center group-hover:border-primary transition-colors">
+                <span className="material-symbols-outlined text-stone-500 group-hover:text-primary text-xl">{link.icon}</span>
               </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-sm font-semibold text-stone-900 block truncate">{link.handle}</span>
-                <span className="text-xs text-stone-500">{link.platform}</span>
+              <div className="leading-tight">
+                <span className="text-sm font-bold text-stone-900 block group-hover:text-primary transition-colors">{link.handle}</span>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-stone-400">{link.platform}</span>
               </div>
-              <span className="material-symbols-outlined text-stone-400 group-hover:text-stone-900 group-hover:translate-x-1 transition-all">arrow_forward</span>
             </a>
           ))}
         </div>

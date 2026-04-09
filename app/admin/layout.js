@@ -62,9 +62,9 @@ export default function AdminLayout({ children }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <div className="w-16 h-16 bg-primary/20 rounded-full"></div>
-          <div className="h-4 w-32 bg-stone-200 rounded"></div>
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+          <p className="text-on-surface-variant animate-pulse font-medium">Preparando panel...</p>
         </div>
       </div>
     )
@@ -97,14 +97,17 @@ export default function AdminLayout({ children }) {
                 <Link href="/admin/noticias" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
                   Noticias
                 </Link>
-                <Link href="/admin/noticias/nueva" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
-                  Nueva Noticia
-                </Link>
-                <Link href="/admin/publicidades" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
-                  Publicidades
+                <Link href="/admin/campanas" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
+                  Campañas
                 </Link>
                 <Link href="/admin/categorias" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
                   Categorías
+                </Link>
+                <Link href="/admin/firmas" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
+                  Firmas
+                </Link>
+                <Link href="/admin/redes" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
+                  Redes
                 </Link>
               </div>
             </div>

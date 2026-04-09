@@ -2,21 +2,26 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { getCategorias } from '@/lib/supabase'
+import { getCategorias, supabase, TABLES } from '@/lib/supabase'
 
 export default function Footer() {
   const [categorias, setCategorias] = useState([])
+  const [redes, setRedes] = useState([])
 
   useEffect(() => {
-    async function fetchCategorias() {
+    async function fetchData() {
       try {
-        const data = await getCategorias()
-        setCategorias(data || [])
+        const [categoriasData, redesData] = await Promise.all([
+          getCategorias(),
+          supabase.from(TABLES.REDES_SOCIALES).select('*').eq('activo', true).order('orden', { ascending: true })
+        ])
+        setCategorias(categoriasData || [])
+        setRedes(redesData.data || [])
       } catch (error) {
-        console.error('Error fetching categories for footer:', error)
+        console.error('Error fetching data for footer:', error)
       }
     }
-    fetchCategorias()
+    fetchData()
   }, [])
 
   // In a real application, you might want a 'tipo' field on categories to distinguish cities from topics.
@@ -40,15 +45,28 @@ export default function Footer() {
               Producciones y Servicios SAS. Comprometidos con la veracidad, la cultura y el desarrollo del Oriente Antioqueño desde hace más de una década.
             </p>
             <div className="flex gap-3">
-              <a className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center text-stone-600 hover:from-primary hover:to-secondary hover:text-white transition-all duration-300 hover:scale-110" href="https://www.facebook.com/Gaamaproducciones" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
-                <span className="material-symbols-outlined text-lg">public</span>
-              </a>
-              <a className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center text-stone-600 hover:from-primary hover:to-secondary hover:text-white transition-all duration-300 hover:scale-110" href="https://www.youtube.com/@gaamaproducciones" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
-                <span className="material-symbols-outlined text-lg">smart_display</span>
-              </a>
-              <a className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center text-stone-600 hover:from-primary hover:to-secondary hover:text-white transition-all duration-300 hover:scale-110" href="https://www.instagram.com/gaamatv/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                <span className="material-symbols-outlined text-lg">camera</span>
-              </a>
+              {redes.map(red => (
+                <a 
+                  key={red.id}
+                  className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center text-stone-600 hover:from-primary hover:to-secondary hover:text-white transition-all duration-300 hover:scale-110" 
+                  href={red.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  aria-label={red.plataforma}
+                >
+                  <span className="material-symbols-outlined text-lg">{red.icono || 'public'}</span>
+                </a>
+              ))}
+              {redes.length === 0 && (
+                <>
+                  <a className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center text-stone-600 hover:from-primary hover:to-secondary hover:text-white transition-all duration-300 hover:scale-110" href="https://www.facebook.com/Gaamaproducciones" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                    <span className="material-symbols-outlined text-lg">public</span>
+                  </a>
+                  <a className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center text-stone-600 hover:from-primary hover:to-secondary hover:text-white transition-all duration-300 hover:scale-110" href="https://www.youtube.com/@gaamaproducciones" target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+                    <span className="material-symbols-outlined text-lg">smart_display</span>
+                  </a>
+                </>
+              )}
             </div>
           </div>
           <div className="md:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-6 md:gap-8">

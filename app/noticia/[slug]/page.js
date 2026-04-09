@@ -2,6 +2,8 @@ import { getNoticiaBySlug, getNoticiasRelacionadas, getNoticias, getCategorias }
 import { extractYouTubeId, getYouTubeThumbnail } from '@/lib/supabase'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import ViewTracker from '@/app/components/ViewTracker'
+import ShareButtons from '@/app/components/ShareButtons'
 
 export const revalidate = 30
 
@@ -44,6 +46,7 @@ export default async function NoticiaPage({ params }) {
 
   return (
     <>
+      <ViewTracker id={noticia.id} />
       <ArticleContent noticia={noticia} youtubeId={youtubeId} />
       <RelatedNews noticias={relacionadas} />
     </>
@@ -91,13 +94,8 @@ function ArticleContent({ noticia, youtubeId }) {
             {formatDate(noticia.fecha_publicacion)}
           </time>
           <div className="hidden md:block w-[1px] h-8 bg-outline-variant/30"></div>
-          <div className="flex gap-4">
-            <button className="text-on-surface-variant hover:text-primary transition-colors" aria-label="Facebook">
-              <span className="material-symbols-outlined text-xl">share</span>
-            </button>
-            <button className="text-on-surface-variant hover:text-primary transition-colors" aria-label="WhatsApp">
-              <span className="material-symbols-outlined text-xl">chat</span>
-            </button>
+          <div className="flex gap-4 items-center">
+            <ShareButtons title={noticia.titulo} text={noticia.excerpt || 'Lee esta noticia en GaamaTV.'} />
           </div>
         </div>
       </header>

@@ -11,6 +11,7 @@ export default function Navbar() {
   const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [currentDate, setCurrentDate] = useState('')
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -40,9 +41,23 @@ export default function Navbar() {
       setScrolled(window.scrollY > 20)
     }
     window.addEventListener('scroll', handleScroll)
+
+    const updateDate = () => {
+      const now = new Date()
+      // Opciones para: Jueves, 9 de abril de 2026
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }
+      let formattedDate = now.toLocaleDateString('es-CO', options)
+      // Capitalizar primera letra
+      formattedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1)
+      setCurrentDate(formattedDate)
+    }
+    updateDate()
+    const dateTimer = setInterval(updateDate, 60000) // update evry minute
+
     return () => {
       window.removeEventListener('resize', checkDesktop)
       window.removeEventListener('scroll', handleScroll)
+      clearInterval(dateTimer)
     }
   }, [])
 
@@ -69,6 +84,21 @@ export default function Navbar() {
           ? 'bg-white/95 backdrop-blur-lg shadow-lg shadow-stone-200/50' 
           : 'bg-stone-900 border-b border-white/10'
       }`}>
+        {/* TOP BAR: FECHA Y DÍA */}
+        <div className={`w-full border-b transition-colors duration-300 ${
+          scrolled ? 'bg-stone-50 border-stone-200 text-stone-500' : 'bg-black/20 border-white/5 text-white/70'
+        }`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex justify-center md:justify-between items-center text-[10px] sm:text-xs font-medium tracking-wide">
+            <span className="flex items-center gap-1.5 sm:gap-2">
+              <span className="material-symbols-outlined text-[12px] sm:text-sm">calendar_today</span>
+              {currentDate || 'Cargando fecha...'}
+            </span>
+            <div className="hidden md:flex items-center gap-4">
+              <span className="hover:text-primary transition-colors cursor-pointer text-[10px] uppercase font-bold tracking-widest">Edición Digital</span>
+            </div>
+          </div>
+        </div>
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 sm:h-20">
             <div className="flex items-center gap-4 sm:gap-8">
@@ -99,7 +129,7 @@ export default function Navbar() {
                   <span className="relative">Inicio</span>
                 </Link>
 
-                {categorias.filter(c => c.tipo !== 'ciudad').map((cat) => (
+                {categorias.filter(c => c.tipo?.toLowerCase().trim() !== 'ciudad').map((cat) => (
                   <Link
                     key={cat.id}
                     href={`/?categoria=${cat.slug}`}
@@ -116,23 +146,25 @@ export default function Navbar() {
                 ))}
 
                 {/* Dropdown de Municipios/Ciudades */}
-                {categorias.some(c => c.tipo === 'ciudad') && (
-                  <div className="relative">
+                {categorias.some(c => c.tipo?.toLowerCase().trim() === 'ciudad') && (
+                  <div 
+                    className="relative"
+                    onMouseEnter={() => setMoreMenuOpen(true)}
+                    onMouseLeave={() => setMoreMenuOpen(false)}
+                  >
                     <button
-                      onMouseEnter={() => setMoreMenuOpen(true)}
                       className={`flex items-center gap-1 px-3 xl:px-4 py-2 font-headline font-semibold text-sm xl:text-base tracking-tight transition-all duration-200 rounded-md ${
-                        scrolled ? (categorias.filter(c => c.tipo === 'ciudad').some(c => isNavItemActive(c.slug)) ? 'text-primary' : 'text-stone-600 hover:text-primary') : (categorias.filter(c => c.tipo === 'ciudad').some(c => isNavItemActive(c.slug)) ? 'text-white' : 'text-white/70 hover:text-white')
+                        scrolled ? (categorias.filter(c => c.tipo?.toLowerCase().trim() === 'ciudad').some(c => isNavItemActive(c.slug)) ? 'text-primary' : 'text-stone-600 hover:text-primary') : (categorias.filter(c => c.tipo?.toLowerCase().trim() === 'ciudad').some(c => isNavItemActive(c.slug)) ? 'text-white' : 'text-white/70 hover:text-white')
                       }`}
                     >
-                      Municipios <span className="material-symbols-outlined text-sm">expand_more</span>
+                      Municipios <span className={`material-symbols-outlined text-sm transition-transform duration-200 ${moreMenuOpen ? 'rotate-180' : ''}`}>expand_more</span>
                     </button>
                     {moreMenuOpen && (
                       <div 
-                        onMouseLeave={() => setMoreMenuOpen(false)}
                         className="absolute top-full right-0 mt-0 w-56 bg-white shadow-2xl rounded-xl border border-stone-100 py-3 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                       >
                         <div className="grid grid-cols-1 gap-1">
-                          {categorias.filter(c => c.tipo === 'ciudad').map((cat) => (
+                          {categorias.filter(c => c.tipo?.toLowerCase().trim() === 'ciudad').map((cat) => (
                             <Link
                               key={cat.id}
                               href={`/?categoria=${cat.slug}`}
@@ -210,7 +242,7 @@ export default function Navbar() {
                     Inicio
                   </Link>
 
-                  {categorias.map((cat) => (
+                  {categorias.filter(c => c.tipo?.toLowerCase().trim() !== 'ciudad').map((cat) => (
                     <Link
                       key={cat.id}
                       href={`/?categoria=${cat.slug}`}
@@ -227,6 +259,29 @@ export default function Navbar() {
                   ))}
                 </div>
               </div>
+
+              {categorias.some(c => c.tipo?.toLowerCase().trim() === 'ciudad') && (
+                <div className="mt-6 space-y-4">
+                  <p className="text-xs font-bold text-stone-400 uppercase tracking-widest pl-4">Municipios</p>
+                  <div className="space-y-1">
+                    {categorias.filter(c => c.tipo?.toLowerCase().trim() === 'ciudad').map((cat) => (
+                      <Link
+                        key={cat.id}
+                        href={`/?categoria=${cat.slug}`}
+                        onClick={(e) => handleNavClick(e, `/?categoria=${cat.slug}`)}
+                        className={`flex items-center gap-4 px-4 py-4 rounded-2xl font-headline font-bold text-lg transition-all duration-200 ${
+                          isNavItemActive(cat.slug)
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined text-primary/40">location_on</span>
+                        {cat.nombre}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="mt-8 pt-8 border-t border-stone-100">
                 <p className="text-xs font-bold text-stone-400 uppercase tracking-widest pl-4 mb-4">Administración</p>

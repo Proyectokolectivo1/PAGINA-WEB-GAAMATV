@@ -109,7 +109,7 @@ export default function CategoriasAdmin() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto animate-fade-in">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
           <div>
             <h1 className="text-4xl font-headline font-bold text-on-surface mb-2">Administrar Categorías</h1>
@@ -127,8 +127,8 @@ export default function CategoriasAdmin() {
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center p-20 gap-4">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-primary border-r-transparent border-b-primary border-l-transparent"></div>
+          <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
             <p className="text-on-surface-variant animate-pulse font-medium">Cargando categorías...</p>
           </div>
         ) : (
@@ -170,11 +170,11 @@ export default function CategoriasAdmin() {
                       </td>
                       <td className="px-8 py-5">
                         <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase ${
-                          cat.tipo === 'ciudad' 
+                          cat.tipo?.toLowerCase().trim() === 'ciudad' 
                             ? 'bg-blue-100 text-blue-700' 
                             : 'bg-stone-100 text-stone-700'
                         }`}>
-                          {cat.tipo === 'ciudad' ? 'Ciudad' : 'Sección'}
+                          {cat.tipo?.toLowerCase().trim() === 'ciudad' ? 'Ciudad' : 'Sección'}
                         </span>
                       </td>
                       <td className="px-8 py-5">
@@ -325,21 +325,34 @@ export default function CategoriasAdmin() {
                   </div>
 
                   <div className="group">
-                    <label className="block text-sm font-bold mb-2 text-on-surface-variant">Tipo de Categoría</label>
+                    <label className="block text-sm font-bold mb-2 text-on-surface-variant">
+                      Tipo de Categoría <span className="text-error">*</span>
+                    </label>
+                    <p className="text-xs text-on-surface-variant mb-4">
+                      <b>Sección General:</b> Queda visible directamente en el menú de inicio (sin agruparse).<br/>
+                      <b>Ciudad/Municipio:</b> Se agrupa dentro de la lista desplegable &quot;Municipios&quot;.
+                    </p>
                     <div className="flex gap-4">
                       {['seccion', 'ciudad'].map((t) => (
-                        <button
+                        <label
                           key={t}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, tipo: t })}
-                          className={`flex-1 py-3 px-4 rounded-2xl border-2 transition-all font-bold capitalize ${
+                          className={`flex-1 py-3 px-4 rounded-2xl border-2 transition-all font-bold capitalize cursor-pointer flex items-center justify-center gap-2 ${
                             formData.tipo === t
                               ? 'border-primary bg-primary/5 text-primary shadow-sm'
                               : 'border-outline-variant text-on-surface-variant hover:border-primary/50'
                           }`}
                         >
+                          <input
+                            type="radio"
+                            name="tipo"
+                            value={t}
+                            checked={formData.tipo === t}
+                            onChange={handleInputChange}
+                            required
+                            className="sr-only"
+                          />
                           {t === 'seccion' ? 'Sección General' : 'Ciudad/Municipio'}
-                        </button>
+                        </label>
                       ))}
                     </div>
                   </div>
