@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --gaama-primary: #c8d643;
+    --gaama-secondary: #579a4f;
+    --gaama-tertiary: #9cbf48;
+    --gaama-accent: #78ab4b;
+    --gaama-light: #afcb48;
+    --gaama-dark: #67a24d;
+    --gaama-green: #89b54a;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background font-body text-on-surface antialiased;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(to right, #579a4f, #43823d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .editorial-shadow {
+    box-shadow: 0px 12px 32px rgba(27, 28, 28, 0.06);
+  }
+
+  .tonal-shift {
+    transition: background-color 0.3s ease;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}

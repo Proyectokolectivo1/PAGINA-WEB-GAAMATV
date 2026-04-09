@@ -1,0 +1,131 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+
+export default function AdminLayout({ children }) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  const isAuthPage = pathname === '/admin/login' || pathname === '/admin/setup'
+
+  useEffect(() => {
+    if (isAuthPage) {
+      setLoading(false)
+      return
+    }
+
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        
+        if (!session) {
+          router.push('/admin/login')
+        } else {
+          setUser(session.user)
+        }
+      } catch (error) {
+        console.error('Auth error:', error)
+        router.push('/admin/login')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkAuth()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session && !isAuthPage) {
+        router.push('/admin/login')
+      } else if (session) {
+        setUser(session.user)
+        setLoading(false)
+      }
+    })
+
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe()
+      }
+    }
+  }, [router, pathname, isAuthPage])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/admin/login')
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center gap-4">
+          <div className="w-16 h-16 bg-primary/20 rounded-full"></div>
+          <div className="h-4 w-32 bg-stone-200 rounded"></div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isAuthPage) {
+    return children
+  }
+
+  return (
+    <div className="min-h-screen bg-surface">
+      <nav className="bg-white shadow-sm border-b border-outline-variant/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-8">
+              <Link href="/admin" className="flex items-center gap-2">
+                <img 
+                  src="/logo-blanco.png" 
+                  alt="Gaama TV" 
+                  className="h-8 w-auto brightness-0"
+                />
+                <span className="font-headline text-lg font-black text-on-surface italic">
+                  Admin
+                </span>
+              </Link>
+              <div className="hidden md:flex items-center gap-6">
+                <Link href="/admin" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
+                  Dashboard
+                </Link>
+                <Link href="/admin/noticias" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
+                  Noticias
+                </Link>
+                <Link href="/admin/noticias/nueva" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
+                  Nueva Noticia
+                </Link>
+                <Link href="/admin/publicidades" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
+                  Publicidades
+                </Link>
+                <Link href="/admin/categorias" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
+                  Categorías
+                </Link>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <Link href="/" target="_blank" className="text-on-surface-variant hover:text-primary transition-colors text-sm">
+                Ver sitio
+              </Link>
+              <button
+                onClick={handleSignOut}
+                className="text-red-600 hover:text-red-700 transition-colors text-sm font-medium"
+              >
+                Cerrar sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {children}
+      </main>
+    </div>
+  )
+}

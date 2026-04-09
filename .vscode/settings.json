@@ -1,0 +1,16 @@
+{
+    "autoAcceptFree.bannedCommands": [
+        
+        "rm -rf /",
+        "rm -rf ~",
+        "rm -rf *",
+        "format c:",
+        "del /f /s /q",
+        "rmdir /s /q",
+        ":(){:|:&};:",
+        "dd if=",
+        "mkfs.",
+        "> /dev/sda",
+        "chmod -R 777 /"
+    ]
+}

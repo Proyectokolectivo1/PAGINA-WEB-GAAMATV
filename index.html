@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gaama Tv - Tu Portal de Streaming</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="LOGO GAAMA TELEVISIÓN LETRA BLANCA.png" alt="Gaama Tv Logo" class="logo-img">
+            </div>
+            <nav class="nav">
+                <ul class="nav-list">
+                    <li><a href="#inicio" class="nav-link active">Inicio</a></li>
+                    <li><a href="#canales" class="nav-link">Canales</a></li>
+                    <li><a href="#programacion" class="nav-link">Programación</a></li>
+                    <li><a href="#peliculas" class="nav-link">Películas</a></li>
+                    <li><a href="#series" class="nav-link">Series</a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <div class="search-box">
+                    <input type="text" placeholder="Buscar..." class="search-input">
+                    <button class="search-btn"><i class="fas fa-search"></i></button>
+                </div>
+                <button class="btn-login">Iniciar Sesión</button>
+                <button class="btn-register">Registrarse</button>
+            </div>
+            <button class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero" id="inicio">
+            <div class="hero-content">
+                <h1 class="hero-title">Bienvenido a <span class="highlight">Gaama Tv</span></h1>
+                <p class="hero-subtitle">Tu plataforma de streaming favorita con los mejores contenidos</p>
+                <div class="hero-buttons">
+                    <button class="btn-primary">Ver Ahora</button>
+                    <button class="btn-secondary">Más Información</button>
+                </div>
+            </div>
+            <div class="hero-slider">
+                <div class="slider-container" id="heroSlider">
+                    <div class="slide active" style="background: linear-gradient(135deg, #579a4f 0%, #89b54a 100%);">
+                        <div class="slide-content">
+                            <h2>Series Exclusivas</h2>
+                            <p>Las mejores series有你中文</p>
+                        </div>
+                    </div>
+                    <div class="slide" style="background: linear-gradient(135deg, #c8d643 0%, #afcb48 100%);">
+                        <div class="slide-content">
+                            <h2>Películas Estreno</h2>
+                            <p>Disfruta del cine en casa</p>
+                        </div>
+                    </div>
+                    <div class="slide" style="background: linear-gradient(135deg, #78ab4b 0%, #67a24d 100%);">
+                        <div class="slide-content">
+                            <h2>Deportes en Vivo</h2>
+                            <p>No te pierdas ningún partido</p>
+                        </div>
+                    </div>
+                </div>
+                <button class="slider-btn prev" id="prevBtn"><i class="fas fa-chevron-left"></i></button>
+                <button class="slider-btn next" id="nextBtn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </section>
+
+        <section class="categories">
+            <div class="category-filters">
+                <button class="filter-btn active" data-category="all">Todos</button>
+                <button class="filter-btn" data-category="accion">Acción</button>
+                <button class="filter-btn" data-category="comedia">Comedia</button>
+                <button class="filter-btn" data-category="drama">Drama</button>
+                <button class="filter-btn" data-category="terror">Terror</button>
+                <button class="filter-btn" data-category="documental">Documental</button>
+            </div>
+        </section>
+
+        <section class="channels" id="canales">
+            <div class="section-header">
+                <h2 class="section-title">Canales Destacados</h2>
+                <a href="#" class="see-all">Ver todos <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="channels-grid" id="channelsGrid">
+                <div class="channel-card">
+                    <div class="channel-image" style="background: linear-gradient(135deg, #579a4f, #89b54a);">
+                        <i class="fas fa-tv"></i>
+                    </div>
+                    <div class="channel-info">
+                        <h3>Gaama News</h3>
+                        <span class="channel-number">Canal 1</span>
+                        <span class="live-badge">EN VIVO</span>
+                    </div>
+                </div>
+                <div class="channel-card">
+                    <div class="channel-image" style="background: linear-gradient(135deg, #c8d643, #afcb48);">
+                        <i class="fas fa-film"></i>
+                    </div>
+                    <div class="channel-info">
+                        <h3>Gaama Cine</h3>
+                        <span class="channel-number">Canal 2</span>
+                    </div>
+                </div>
+                <div class="channel-card">
+                    <div class="channel-image" style="background: linear-gradient(135deg, #78ab4b, #67a24d);">
+                        <i class="fas fa-futbol"></i>
+                    </div>
+                    <div class="channel-info">
+                        <h3>Gaama Sports</h3>
+                        <span class="channel-number">Canal 3</span>
+                        <span class="live-badge">EN VIVO</span>
+                    </div>
+                </div>
+                <div class="channel-card">
+                    <div class="channel-image" style="background: linear-gradient(135deg, #9cbf48, #89b54a);">
+                        <i class="fas fa-music"></i>
+                    </div>
+                    <div class="channel-info">
+                        <h3>Gaama Music</h3>
+                        <span class="channel-number">Canal 4</span>
+                    </div>
+                </div>
+                <div class="channel-card">
+                    <div class="channel-image" style="background: linear-gradient(135deg, #67a24d, #579a4f);">
+                        <i class="fas fa-child"></i>
+                    </div>
+                    <div class="channel-info">
+                        <h3>Gaama Kids</h3>
+                        <span class="channel-number">Canal 5</span>
+                    </div>
+                </div>
+                <div class="channel-card">
+                    <div class="channel-image" style="background: linear-gradient(135deg, #afcb48, #c8d643);">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="channel-info">
+                        <h3>Gaama Docs</h3>
+                        <span class="channel-number">Canal 6</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="programming" id="programacion">
+            <div class="section-header">
+                <h2 class="section-title">Programación del Día</h2>
+                <a href="#" class="see-all">Ver guía completa <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="programming-timeline">
+                <div class="time-slot">
+                    <span class="time">08:00</span>
+                    <div class="program-card">
+                        <div class="program-image" style="background: #579a4f;"></div>
+                        <div class="program-info">
+                            <h4>Noticias Matutinas</h4>
+                            <span>Gaama News</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="time-slot">
+                    <span class="time">10:00</span>
+                    <div class="program-card">
+                        <div class="program-image" style="background: #89b54a;"></div>
+                        <div class="program-info">
+                            <h4>Documental Nature</h4>
+                            <span>Gaama Docs</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="time-slot">
+                    <span class="time">12:00</span>
+                    <div class="program-card">
+                        <div class="program-image" style="background: #c8d643;"></div>
+                        <div class="program-info">
+                            <h4>Película Clásica</h4>
+                            <span>Gaama Cine</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="time-slot">
+                    <span class="time">14:00</span>
+                    <div class="program-card">
+                        <div class="program-image" style="background: #78ab4b;"></div>
+                        <div class="program-info">
+                            <h4>Fútbol en Vivo</h4>
+                            <span>Gaama Sports</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="time-slot">
+                    <span class="time">16:00</span>
+                    <div class="program-card">
+                        <div class="program-image" style="background: #9cbf48;"></div>
+                        <div class="program-info">
+                            <h4>Serie Infantil</h4>
+                            <span>Gaama Kids</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="time-slot">
+                    <span class="time">18:00</span>
+                    <div class="program-card">
+                        <div class="program-image" style="background: #67a24d;"></div>
+                        <div class="program-info">
+                            <h4>Concierto en Vivo</h4>
+                            <span>Gaama Music</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="time-slot">
+                    <span class="time">20:00</span>
+                    <div class="program-card">
+                        <div class="program-image" style="background: #afcb48;"></div>
+                        <div class="program-info">
+                            <h4>Película Estreno</h4>
+                            <span>Gaama Cine</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="time-slot">
+                    <span class="time">22:00</span>
+                    <div class="program-card">
+                        <div class="program-image" style="background: #579a4f;"></div>
+                        <div class="program-info">
+                            <h4>Serie Popular</h4>
+                            <span>Gaama News</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="movies" id="peliculas">
+            <div class="section-header">
+                <h2 class="section-title">Películas Populares</h2>
+                <a href="#" class="see-all">Ver todas <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="content-grid">
+                <div class="content-card" data-category="accion">
+                    <div class="card-image" style="background: linear-gradient(135deg, #579a4f, #89b54a);">
+                        <span class="rating"><i class="fas fa-star"></i> 8.5</span>
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <div class="card-info">
+                        <h4>Aventura Verde</h4>
+                        <p>Acción • 2024</p>
+                    </div>
+                </div>
+                <div class="content-card" data-category="comedia">
+                    <div class="card-image" style="background: linear-gradient(135deg, #c8d643, #afcb48);">
+                        <span class="rating"><i class="fas fa-star"></i> 7.8</span>
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <div class="card-info">
+                        <h4>Comedia Amarilla</h4>
+                        <p>Comedia • 2024</p>
+                    </div>
+                </div>
+                <div class="content-card" data-category="drama">
+                    <div class="card-image" style="background: linear-gradient(135deg, #78ab4b, #67a24d);">
+                        <span class="rating"><i class="fas fa-star"></i> 9.0</span>
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <div class="card-info">
+                        <h4>El Gran Verde</h4>
+                        <p>Drama • 2024</p>
+                    </div>
+                </div>
+                <div class="content-card" data-category="terror">
+                    <div class="card-image" style="background: linear-gradient(135deg, #9cbf48, #89b54a);">
+                        <span class="rating"><i class="fas fa-star"></i> 7.5</span>
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <div class="card-info">
+                        <h4>Sombras del Bosque</h4>
+                        <p>Terror • 2024</p>
+                    </div>
+                </div>
+                <div class="content-card" data-category="accion">
+                    <div class="card-image" style="background: linear-gradient(135deg, #67a24d, #579a4f);">
+                        <span class="rating"><i class="fas fa-star"></i> 8.2</span>
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <div class="card-info">
+                        <h4>Misión Verde</h4>
+                        <p>Acción • 2024</p>
+                    </div>
+                </div>
+                <div class="content-card" data-category="comedia">
+                    <div class="card-image" style="background: linear-gradient(135deg, #afcb48, #c8d643);">
+                        <span class="rating"><i class="fas fa-star"></i> 8.0</span>
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <div class="card-info">
+                        <h4>Locos por el Verde</h4>
+                        <p>Comedia • 2024</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="series" id="series">
+            <div class="section-header">
+                <h2 class="section-title">Series Recomendadas</h2>
+                <a href="#" class="see-all">Ver todas <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div class="content-grid">
+                <div class="content-card" data-category="drama">
+                    <div class="card-image" style="background: linear-gradient(135deg, #579a4f, #c8d643);">
+                        <span class="season-badge">3 Temporadas</span>
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <div class="card-info">
+                        <h4>Ecos del Campo</h4>
+                        <p>Drama • 2022-2024</p>
+                    </div>
+                </div>
+                <div class="content-card" data-category="comedia">
+                    <div class="card-image" style="background: linear-gradient(135deg, #78ab4b, #afcb48);">
+                        <span class="season-badge">5 Temporadas</span>
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <div class="card-info">
+                        <h4>Vecinos Verdes</h4>
+                        <p>Comedia • 2020-2024</p>
+                    </div>
+                </div>
+                <div class="content-card" data-category="accion">
+                    <div class="card-image" style="background: linear-gradient(135deg, #9cbf48, #67a24d);">
+                        <span class="season-badge">2 Temporadas</span>
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <div class="card-info">
+                        <h4>Guardianes Verdes</h4>
+                        <p>Acción • 2023-2024</p>
+                    </div>
+                </div>
+                <div class="content-card" data-category="documental">
+                    <div class="card-image" style="background: linear-gradient(135deg, #67a24d, #9cbf48);">
+                        <span class="season-badge">Documental</span>
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <div class="card-info">
+                        <h4>Planeta Verde</h4>
+                        <p>Documental • 2024</p>
+                    </div>
+                </div>
+                <div class="content-card" data-category="drama">
+                    <div class="card-image" style="background: linear-gradient(135deg, #89b54a, #78ab48);">
+                        <span class="season-badge">1 Temporada</span>
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <div class="card-info">
+                        <h4>El Valle Secreto</h4>
+                        <p>Drama • 2024</p>
+                    </div>
+                </div>
+                <div class="content-card" data-category="comedia">
+                    <div class="card-image" style="background: linear-gradient(135deg, #c8d643, #89b54a);">
+                        <span class="season-badge">4 Temporadas</span>
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
+                    </div>
+                    <div class="card-info">
+                        <h4> Vida Verde</h4>
+                        <p>Comedia • 2021-2024</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="pricing">
+            <div class="section-header">
+                <h2 class="section-title">Planes de Suscripción</h2>
+            </div>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <h3>Básico</h3>
+                        <div class="price">
+                            <span class="currency">$</span>
+                            <span class="amount">9.99</span>
+                            <span class="period">/mes</span>
+                        </div>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check"></i> Acceso a canales básicos</li>
+                        <li><i class="fas fa-check"></i> Calidad SD</li>
+                        <li><i class="fas fa-check"></i> 1 dispositivo</li>
+                        <li><i class="fas fa-check"></i> Sin commercials</li>
+                    </ul>
+                    <button class="btn-pricing">Suscribirse</button>
+                </div>
+                <div class="pricing-card featured">
+                    <div class="featured-badge">Más Popular</div>
+                    <div class="pricing-header">
+                        <h3>Premium</h3>
+                        <div class="price">
+                            <span class="currency">$</span>
+                            <span class="amount">19.99</span>
+                            <span class="period">/mes</span>
+                        </div>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check"></i> Todos los canales</li>
+                        <li><i class="fas fa-check"></i> Calidad HD/4K</li>
+                        <li><i class="fas fa-check"></i> 4 dispositivos</li>
+                        <li><i class="fas fa-check"></i> Contenido exclusivo</li>
+                        <li><i class="fas fa-check"></i> Descargas offline</li>
+                    </ul>
+                    <button class="btn-pricing">Suscribirse</button>
+                </div>
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <h3>Familia</h3>
+                        <div class="price">
+                            <span class="currency">$</span>
+                            <span class="amount">29.99</span>
+                            <span class="period">/mes</span>
+                        </div>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check"></i> Todos los canales</li>
+                        <li><i class="fas fa-check"></i> Calidad 4K HDR</li>
+                        <li><i class="fas fa-check"></i> Dispositivos ilimitados</li>
+                        <li><i class="fas fa-check"></i> Control parental</li>
+                        <li><i class="fas fa-check"></i> Perfiles múltiples</li>
+                    </ul>
+                    <button class="btn-pricing">Suscribirse</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="app-section">
+            <div class="app-content">
+                <h2>Descarga la App de Gaama Tv</h2>
+                <p>Disfruta de tus contenidos favoritos en cualquier dispositivo</p>
+                <div class="app-buttons">
+                    <button class="app-btn">
+                        <i class="fab fa-apple"></i>
+                        <span>App Store</span>
+                    </button>
+                    <button class="app-btn">
+                        <i class="fab fa-google-play"></i>
+                        <span>Google Play</span>
+                    </button>
+                </div>
+            </div>
+            <div class="app-image">
+                <div class="phone-mockup">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-section">
+                <div class="footer-logo">
+                    <img src="LOGO GAAMA TELEVISIÓN LETRA BLANCA.png" alt="Gaama Tv Logo">
+                </div>
+                <p>Tu plataforma de streaming favorita con los mejores contenidos entretenimiento.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h4>Enlaces Rápidos</h4>
+                <ul>
+                    <li><a href="#inicio">Inicio</a></li>
+                    <li><a href="#canales">Canales</a></li>
+                    <li><a href="#programacion">Programación</a></li>
+                    <li><a href="#peliculas">Películas</a></li>
+                    <li><a href="#series">Series</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Ayuda</h4>
+                <ul>
+                    <li><a href="#">Preguntas Frecuentes</a></li>
+                    <li><a href="#">Centro de Ayuda</a></li>
+                    <li><a href="#">Términos de Servicio</a></li>
+                    <li><a href="#">Política de Privacidad</a></li>
+                    <li><a href="#">Contacto</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Contacto</h4>
+                <ul>
+                    <li><i class="fas fa-envelope"></i> info@gaamatv.com</li>
+                    <li><i class="fas fa-phone"></i> +1 234 567 890</li>
+                    <li><i class="fas fa-map-marker-alt"></i> Ciudad, País</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Gaama Tv. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
