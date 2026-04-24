@@ -126,6 +126,7 @@ export default function AdminNoticias() {
                   <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Título de Noticia</th>
                   <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase tracking-wider whitespace-nowrap">Clasificación</th>
                   <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Estado</th>
+                  <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase tracking-wider text-center whitespace-nowrap">Visitas</th>
                   <th className="px-6 py-4 text-xs font-bold text-stone-500 uppercase tracking-wider text-right">Acciones</th>
                 </tr>
               </thead>
@@ -182,6 +183,12 @@ export default function AdminNoticias() {
                         </span>
                         {noticia.publicado ? 'PUBLICADA' : 'BORRADOR'}
                       </button>
+                    </td>
+                    <td className="px-6 py-5 align-top text-center">
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50/80 border border-blue-100 rounded-lg" title="Visitas totales">
+                        <span className="material-symbols-outlined text-[14px] text-blue-500">visibility</span>
+                        <span className="text-xs font-bold text-blue-700">{(noticia.visitas || 0).toLocaleString('es-CO')}</span>
+                      </div>
                     </td>
                     <td className="px-6 py-5 align-top">
                       <div className="flex items-center justify-end gap-2 opacity-100 sm:opacity-50 sm:group-hover:opacity-100 transition-opacity">

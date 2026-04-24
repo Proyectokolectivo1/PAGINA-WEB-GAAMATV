@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { getCategoriasAdmin, updateCategoria, createCategoria, deleteCategoria } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
 
 export default function CategoriasAdmin() {
   const [categorias, setCategorias] = useState([])
@@ -16,6 +17,7 @@ export default function CategoriasAdmin() {
     activa: true,
     tipo: 'seccion'
   })
+  const router = useRouter()
 
   useEffect(() => {
     fetchCategorias()
@@ -89,6 +91,8 @@ export default function CategoriasAdmin() {
       }
       fetchCategorias()
       handleCloseModal()
+      // Force refresh on the main page to update navbar
+      router.refresh()
     } catch (error) {
       console.error('Error saving category:', error)
       alert('Error al guardar la categoría: ' + (error.message || 'Error desconocido'))
@@ -100,6 +104,8 @@ export default function CategoriasAdmin() {
       try {
         await deleteCategoria(id)
         fetchCategorias()
+        // Force refresh on the main page to update navbar
+        router.refresh()
       } catch (error) {
         console.error('Error deleting category:', error)
         alert('No se puede eliminar la categoría. Probablemente tiene noticias vinculadas.')

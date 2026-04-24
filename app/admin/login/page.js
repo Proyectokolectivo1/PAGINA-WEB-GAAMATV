@@ -47,9 +47,11 @@ export default function AdminLogin() {
     <div className="min-h-screen bg-surface flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <h1 className="font-headline text-3xl font-black text-emerald-900 italic">
-            GaamaTV
-          </h1>
+          <img 
+            src="/logo-principal.png" 
+            alt="Gaama TV" 
+            className="h-12 w-auto mx-auto mb-4"
+          />
           <p className="text-on-surface-variant mt-2">Panel de Administración</p>
         </div>
 

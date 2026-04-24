@@ -22,8 +22,8 @@ export default function Navbar() {
       try {
         const data = await getCategorias()
         // Filtrar para evitar duplicado de 'Inicio' si existe en la DB
-        const filtered = data?.filter(cat => 
-          cat.nombre?.toLowerCase().trim() !== 'inicio' && 
+        const filtered = data?.filter(cat =>
+          cat.nombre?.toLowerCase().trim() !== 'inicio' &&
           cat.slug?.toLowerCase().trim() !== 'inicio'
         )
         setCategorias(filtered || [])
@@ -32,6 +32,9 @@ export default function Navbar() {
       }
     }
     fetchCategorias()
+
+    // Refresh categories every 30 seconds to catch new additions
+    const interval = setInterval(fetchCategorias, 30000)
 
     const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024)
     checkDesktop()
@@ -55,6 +58,7 @@ export default function Navbar() {
     const dateTimer = setInterval(updateDate, 60000) // update evry minute
 
     return () => {
+      clearInterval(interval)
       window.removeEventListener('resize', checkDesktop)
       window.removeEventListener('scroll', handleScroll)
       clearInterval(dateTimer)
@@ -73,21 +77,14 @@ export default function Navbar() {
     return currentCategoria === slug
   }
 
-  // Estilo para el logo basado en el estado del scroll
-  // Si scrolled es true, el fondo es blanco, así que invertimos el logo blanco para que se vea negro
-  const logoStyle = scrolled ? { filter: 'invert(1)' } : {}
+  // Estilo para el logo siempre invertido para que se vea oscuro sobre fondo blanco
+  const logoStyle = { filter: 'invert(1)' } // o usar un logo-negro.png si existe
 
   return (
     <>
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        scrolled 
-          ? 'bg-white/95 backdrop-blur-lg shadow-lg shadow-stone-200/50' 
-          : 'bg-stone-900 border-b border-white/10'
-      }`}>
+      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 bg-stone-900/95 backdrop-blur-lg shadow-sm border-b border-stone-800`}>
         {/* TOP BAR: FECHA Y DÍA */}
-        <div className={`w-full border-b transition-colors duration-300 ${
-          scrolled ? 'bg-stone-50 border-stone-200 text-stone-500' : 'bg-black/20 border-white/5 text-white/70'
-        }`}>
+        <div className={`w-full border-b transition-colors duration-300 bg-stone-950 border-stone-800 text-stone-400`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-1.5 flex justify-center md:justify-between items-center text-[10px] sm:text-xs font-medium tracking-wide">
             <span className="flex items-center gap-1.5 sm:gap-2">
               <span className="material-symbols-outlined text-[12px] sm:text-sm">calendar_today</span>
@@ -108,10 +105,9 @@ export default function Navbar() {
                 onClick={(e) => handleNavClick(e, '/')}
               >
                 <img 
-                  src="/logo-blanco.png" 
+                  src="/logo-principal.png" 
                   alt="Gaama TV" 
-                  className="h-8 sm:h-12 w-auto transition-all duration-300 group-hover:scale-105"
-                  style={logoStyle}
+                  className="h-8 sm:h-10 w-auto transition-all duration-300 group-hover:scale-105"
                 />
               </Link>
               
@@ -119,13 +115,10 @@ export default function Navbar() {
                 <Link
                   href="/"
                   onClick={(e) => handleNavClick(e, '/')}
-                  className={`relative px-3 xl:px-4 py-2 font-headline font-semibold text-sm xl:text-base tracking-tight transition-all duration-200 rounded-md group ${
-                    scrolled ? (isNavItemActive(null) ? 'text-primary' : 'text-stone-600 hover:text-primary') : (isNavItemActive(null) ? 'text-white' : 'text-white/70 hover:text-white')
+                  className={`relative px-3 xl:px-4 py-2 font-body font-semibold text-[13px] md:text-[14.5px] tracking-wide transition-all duration-200 rounded-md group ${
+                    isNavItemActive(null) ? 'text-primary' : 'text-stone-300 hover:text-primary hover:bg-stone-800'
                   }`}
                 >
-                  {isNavItemActive(null) && (
-                    <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary rounded-full"></span>
-                  )}
                   <span className="relative">Inicio</span>
                 </Link>
 
@@ -134,13 +127,10 @@ export default function Navbar() {
                     key={cat.id}
                     href={`/?categoria=${cat.slug}`}
                     onClick={(e) => handleNavClick(e, `/?categoria=${cat.slug}`)}
-                    className={`relative px-3 xl:px-4 py-2 font-headline font-semibold text-sm xl:text-base tracking-tight transition-all duration-200 rounded-md group ${
-                      scrolled ? (isNavItemActive(cat.slug) ? 'text-primary' : 'text-stone-600 hover:text-primary') : (isNavItemActive(cat.slug) ? 'text-white' : 'text-white/70 hover:text-white')
+                    className={`relative px-3 xl:px-4 py-2 font-body font-semibold text-[13px] md:text-[14.5px] tracking-wide transition-all duration-200 rounded-md group ${
+                      isNavItemActive(cat.slug) ? 'text-primary' : 'text-stone-300 hover:text-primary hover:bg-stone-800'
                     }`}
                   >
-                    {isNavItemActive(cat.slug) && (
-                      <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary rounded-full"></span>
-                    )}
                     <span className="relative">{cat.nombre}</span>
                   </Link>
                 ))}
@@ -153,15 +143,15 @@ export default function Navbar() {
                     onMouseLeave={() => setMoreMenuOpen(false)}
                   >
                     <button
-                      className={`flex items-center gap-1 px-3 xl:px-4 py-2 font-headline font-semibold text-sm xl:text-base tracking-tight transition-all duration-200 rounded-md ${
-                        scrolled ? (categorias.filter(c => c.tipo?.toLowerCase().trim() === 'ciudad').some(c => isNavItemActive(c.slug)) ? 'text-primary' : 'text-stone-600 hover:text-primary') : (categorias.filter(c => c.tipo?.toLowerCase().trim() === 'ciudad').some(c => isNavItemActive(c.slug)) ? 'text-white' : 'text-white/70 hover:text-white')
+                      className={`flex items-center gap-1 px-3 xl:px-4 py-2 font-body font-semibold text-[13px] md:text-[14.5px] tracking-wide transition-all duration-200 rounded-md ${
+                        categorias.filter(c => c.tipo?.toLowerCase().trim() === 'ciudad').some(c => isNavItemActive(c.slug)) ? 'text-primary' : 'text-stone-300 hover:text-primary hover:bg-stone-800'
                       }`}
                     >
                       Municipios <span className={`material-symbols-outlined text-sm transition-transform duration-200 ${moreMenuOpen ? 'rotate-180' : ''}`}>expand_more</span>
                     </button>
                     {moreMenuOpen && (
                       <div 
-                        className="absolute top-full right-0 mt-0 w-56 bg-white shadow-2xl rounded-xl border border-stone-100 py-3 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+                        className="absolute top-full right-0 mt-0 w-56 bg-stone-900 shadow-2xl rounded-xl border border-stone-800 py-3 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
                       >
                         <div className="grid grid-cols-1 gap-1">
                           {categorias.filter(c => c.tipo?.toLowerCase().trim() === 'ciudad').map((cat) => (
@@ -169,8 +159,8 @@ export default function Navbar() {
                               key={cat.id}
                               href={`/?categoria=${cat.slug}`}
                               onClick={(e) => handleNavClick(e, `/?categoria=${cat.slug}`)}
-                              className={`block px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-stone-50 ${
-                                isNavItemActive(cat.slug) ? 'text-primary bg-primary/5' : 'text-stone-600'
+                              className={`block px-5 py-2.5 text-[13.5px] font-medium transition-colors hover:bg-stone-800 ${
+                                isNavItemActive(cat.slug) ? 'text-primary' : 'text-stone-300'
                               }`}
                             >
                               {cat.nombre}
@@ -186,17 +176,13 @@ export default function Navbar() {
 
             <div className="flex items-center gap-2 sm:gap-3">
               <button 
-                className={`p-2 sm:p-2.5 rounded-full transition-all duration-200 ${
-                  scrolled ? 'text-stone-500 hover:text-primary hover:bg-stone-100' : 'text-white/70 hover:text-white hover:bg-white/10'
-                }`}
+                className={`p-2 sm:p-2.5 rounded-full transition-all duration-200 text-stone-300 hover:text-primary hover:bg-stone-800`}
                 aria-label="Buscar"
               >
                 <span className="material-symbols-outlined text-xl sm:text-2xl">search</span>
               </button>
               <button 
-                className={`p-2 sm:p-2.5 rounded-full transition-all duration-200 ${
-                  scrolled ? 'text-stone-500 hover:text-primary hover:bg-stone-100' : 'text-white/70 hover:text-white hover:bg-white/10'
-                }`}
+                className={`p-2 sm:p-2.5 rounded-full transition-all duration-200 text-stone-300 hover:text-primary hover:bg-stone-800`}
                 aria-label="Menú"
                 onClick={() => setMenuOpen(!menuOpen)}
               >
@@ -214,12 +200,12 @@ export default function Navbar() {
             className="fixed inset-0 z-[60] bg-stone-900/60 backdrop-blur-sm animate-in fade-in duration-300" 
             onClick={() => setMenuOpen(false)} 
           />
-          <div className="fixed right-0 top-0 bottom-0 z-[70] bg-white shadow-2xl w-full max-w-xs sm:max-w-md flex flex-col animate-in slide-in-from-right duration-500 ease-out">
-            <div className="flex items-center justify-between p-6 border-b border-stone-100">
-              <img src="/logo-blanco.png" alt="Gaama TV" className="h-8 brightness-0" />
+          <div className="fixed right-0 top-0 bottom-0 z-[70] bg-stone-900 shadow-2xl w-full max-w-xs sm:max-w-md flex flex-col animate-in slide-in-from-right duration-500 ease-out">
+            <div className="flex items-center justify-between p-6 border-b border-stone-800">
+              <img src="/logo-principal.png" alt="Gaama TV" className="h-8" />
               <button 
                 onClick={() => setMenuOpen(false)}
-                className="p-2 rounded-full text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition-all"
+                className="p-2 rounded-full text-stone-400 hover:text-white hover:bg-stone-800 transition-all"
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
@@ -234,8 +220,8 @@ export default function Navbar() {
                     onClick={(e) => handleNavClick(e, '/')}
                     className={`flex items-center gap-4 px-4 py-4 rounded-2xl font-headline font-bold text-lg transition-all duration-200 ${
                       isNavItemActive(null)
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                        ? 'bg-primary/20 text-primary'
+                        : 'text-stone-300 hover:bg-stone-800 hover:text-white'
                     }`}
                   >
                     <span className="material-symbols-outlined">home</span>
@@ -249,8 +235,8 @@ export default function Navbar() {
                       onClick={(e) => handleNavClick(e, `/?categoria=${cat.slug}`)}
                       className={`flex items-center gap-4 px-4 py-4 rounded-2xl font-headline font-bold text-lg transition-all duration-200 ${
                         isNavItemActive(cat.slug)
-                          ? 'bg-primary/10 text-primary'
-                          : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                          ? 'bg-primary/20 text-primary'
+                          : 'text-stone-300 hover:bg-stone-800 hover:text-white'
                       }`}
                     >
                       <span className="material-symbols-outlined text-primary/40">fiber_manual_record</span>
@@ -271,8 +257,8 @@ export default function Navbar() {
                         onClick={(e) => handleNavClick(e, `/?categoria=${cat.slug}`)}
                         className={`flex items-center gap-4 px-4 py-4 rounded-2xl font-headline font-bold text-lg transition-all duration-200 ${
                           isNavItemActive(cat.slug)
-                            ? 'bg-primary/10 text-primary'
-                            : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
+                            ? 'bg-primary/20 text-primary'
+                            : 'text-stone-300 hover:bg-stone-800 hover:text-white'
                         }`}
                       >
                         <span className="material-symbols-outlined text-primary/40">location_on</span>
@@ -283,12 +269,12 @@ export default function Navbar() {
                 </div>
               )}
 
-              <div className="mt-8 pt-8 border-t border-stone-100">
+              <div className="mt-8 pt-8 border-t border-stone-800">
                 <p className="text-xs font-bold text-stone-400 uppercase tracking-widest pl-4 mb-4">Administración</p>
                 <Link 
                   href="/admin" 
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-4 px-4 py-4 rounded-2xl bg-stone-900 text-white font-bold text-lg hover:bg-stone-800 transition-all shadow-lg"
+                  className="flex items-center gap-4 px-4 py-4 rounded-2xl bg-primary text-white font-bold text-lg hover:bg-primary-container transition-all shadow-lg"
                 >
                   <span className="material-symbols-outlined">admin_panel_settings</span>
                   Entrar al Panel
@@ -296,7 +282,7 @@ export default function Navbar() {
               </div>
             </div>
 
-            <div className="p-8 bg-stone-50 border-t border-stone-100">
+            <div className="p-8 bg-stone-950 border-t border-stone-800">
               <p className="text-xs text-stone-500 font-medium text-center">
                 © {new Date().getFullYear()} Gaama Televisión
                 <br/>Oriente Antioqueño

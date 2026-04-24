@@ -11,7 +11,7 @@ export default function AdminLayout({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  const isAuthPage = pathname === '/admin/login' || pathname === '/admin/setup'
+  const isAuthPage = pathname === '/admin/login'
 
   useEffect(() => {
     if (isAuthPage) {
@@ -76,43 +76,43 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="min-h-screen bg-surface">
-      <nav className="bg-white shadow-sm border-b border-outline-variant/20">
+      <nav className="bg-stone-950 shadow-sm border-b border-stone-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-8">
               <Link href="/admin" className="flex items-center gap-2">
                 <img 
-                  src="/logo-blanco.png" 
+                  src="/logo-principal.png" 
                   alt="Gaama TV" 
-                  className="h-8 w-auto brightness-0"
+                  className="h-8 w-auto"
                 />
-                <span className="font-headline text-lg font-black text-on-surface italic">
+                <span className="font-headline text-lg font-black text-white italic">
                   Admin
                 </span>
               </Link>
               <div className="hidden md:flex items-center gap-6">
-                <Link href="/admin" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
+                <Link href="/admin" className="text-stone-400 hover:text-white transition-colors text-sm font-medium">
                   Dashboard
                 </Link>
-                <Link href="/admin/noticias" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
+                <Link href="/admin/noticias" className="text-stone-400 hover:text-white transition-colors text-sm font-medium">
                   Noticias
                 </Link>
-                <Link href="/admin/campanas" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
+                <Link href="/admin/campanas" className="text-stone-400 hover:text-white transition-colors text-sm font-medium">
                   Campañas
                 </Link>
-                <Link href="/admin/categorias" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
+                <Link href="/admin/categorias" className="text-stone-400 hover:text-white transition-colors text-sm font-medium">
                   Categorías
                 </Link>
-                <Link href="/admin/firmas" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
+                <Link href="/admin/firmas" className="text-stone-400 hover:text-white transition-colors text-sm font-medium">
                   Firmas
                 </Link>
-                <Link href="/admin/redes" className="text-on-surface-variant hover:text-primary transition-colors text-sm font-medium">
+                <Link href="/admin/redes" className="text-stone-400 hover:text-white transition-colors text-sm font-medium">
                   Redes
                 </Link>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <Link href="/" target="_blank" className="text-on-surface-variant hover:text-primary transition-colors text-sm">
+              <Link href="/" target="_blank" className="text-stone-400 hover:text-white transition-colors text-sm">
                 Ver sitio
               </Link>
               <button

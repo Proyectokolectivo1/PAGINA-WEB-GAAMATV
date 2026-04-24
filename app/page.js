@@ -1,35 +1,29 @@
 import { getNoticias, getCategorias, getAnuncios, getFirmas, getRedesSociales } from '@/lib/supabase'
 import Link from 'next/link'
 import Image from 'next/image'
+import ImageWithFallback from './components/ImageWithFallback'
 
 export const revalidate = 60
 
-const PLACEHOLDER_IMAGES = {
-  hero: 'https://images.unsplash.com/photo-1565008447742-97f6f38c985c?w=1200&h=800&fit=crop',
-  news: 'https://images.unsplash.com/photo-1516900557549-41557d405adf?w=800&h=600&fit=crop',
-  studio: 'https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=1200&h=800&fit=crop',
-  publicidad: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop',
-}
-
 export default async function Home({ searchParams }) {
-  const categoria = searchParams.categoria || null
-  const busqueda = searchParams.busqueda || null
+  const categoria = await searchParams.categoria || null
+  const busqueda = await searchParams.busqueda || null
 
   let adsError = null
   let anuncios = []
   
   try {
-    const adsData = await getAnuncios(3)
+    const adsData = await getAnuncios(10) // fetch more to intersperse
     anuncios = adsData || []
   } catch (error) {
     adsError = error?.message || 'Error al cargar anuncios'
   }
 
-  const [{ data: noticias, count: totalNoticias }, categoriesData, firmasData, redesData] = await Promise.all([
+  const [{ data: noticias }, categoriesData, firmasData, redesData] = await Promise.all([
     getNoticias({ 
       categoriaSlug: categoria, 
       search: busqueda,
-      limit: 20 
+      limit: 50 
     }),
     getCategorias(),
     getFirmas(),
@@ -40,446 +34,552 @@ export default async function Home({ searchParams }) {
   const firmas = firmasData || []
   const redes = redesData || []
 
+  // Portada logic
   const noticiasDestacadas = noticias?.filter(n => n.destacado) || []
   const noticiaPrincipal = noticiasDestacadas[0] || noticias[0]
-  const otrasNoticias = noticias?.filter(n => n.id !== noticiaPrincipal?.id) || []
 
-  return (
-    <>
-      <HeroSection noticia={noticiaPrincipal} />
-      <CategoriaSection categories={categorias} activeCategory={categoria} />
-      <NewsGrid noticias={otrasNoticias} />
-      <PublicidadSection anuncios={anuncios} error={adsError} />
-      <OpinionSection firmas={firmas} />
-      <SocialSection redes={redes} />
-    </>
-  )
-}
+  // Dynamic Category Sections logic
+  let homeCategorySections = []
+  if (!categoria && !busqueda && categorias?.length > 0) {
+    const layoutTypes = [
+      { layout: 'mixed', type: 'main' },
+      { layout: 'list', type: 'sidebar' },
+      { layout: 'grid', type: 'main' },
+      { layout: 'list', type: 'sidebar' },
+      { layout: 'double', type: 'main' }
+    ]
 
-function HeroSection({ noticia }) {
-  if (!noticia) {
-    return (
-      <section className="mb-16 animate-pulse">
-        <div className="w-full h-[60vh] bg-stone-200 rounded-sm"></div>
-      </section>
-    )
+    const highlightSlugs = categorias.map((cat, index) => {
+       const mapped = layoutTypes[index % layoutTypes.length]
+       return { name: cat.nombre, slug: cat.slug, layout: mapped.layout, type: mapped.type }
+    })
+
+    const sectionRequests = highlightSlugs.map(async (cat) => {
+      try {
+        const { data, count } = await getNoticias({ categoriaSlug: cat.slug, limit: 6 })
+        return { ...cat, news: data || [], totalCount: count || 0 }
+      } catch (e) { return null }
+    })
+
+    const results = await Promise.all(sectionRequests)
+    homeCategorySections = results.filter(Boolean)
   }
 
-  const dateStr = noticia.fecha_publicacion ? new Date(noticia.fecha_publicacion).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+  const mainSections = homeCategorySections.filter(s => s.type === 'main')
+  const sidebarSections = homeCategorySections.filter(s => s.type === 'sidebar')
 
   return (
-    <section className="mb-16 border-b border-stone-200 pb-12 pt-4">
-      <Link href={`/noticia/${noticia.slug}`} className="group block relative">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          {/* Text Content */}
-          <div className="lg:col-span-5 order-2 lg:order-1 flex flex-col justify-center">
-            <div className="flex items-center gap-3 mb-6">
-              <span className="text-white bg-primary font-bold text-[10px] uppercase tracking-widest px-3 py-1 shadow-sm">
-                {noticia.categoria?.nombre || 'General'}
-              </span>
-              <span className="text-stone-500 text-xs font-bold uppercase tracking-widest flex items-center gap-1">
-                <span className="material-symbols-outlined text-[14px]">schedule</span>
-                {dateStr}
-              </span>
-            </div>
-            
-            <h1 className="font-headline text-5xl lg:text-6xl xl:text-7xl font-black text-stone-900 leading-[1.05] tracking-tight mb-6 group-hover:text-primary transition-colors duration-300">
-              {noticia.titulo}
-            </h1>
-            
-            <p className="text-stone-600 text-xl leading-relaxed mb-8 font-serif line-clamp-3">
-              {noticia.excerpt || noticia.contenido?.substring(0, 250) || 'Descubre la información más reciente sobre este acontecimiento vital para el Oriente Antioqueño.'}
-            </p>
-            
-            <div className="flex items-center gap-4">
-               <span className="inline-flex items-center justify-center gap-2 font-bold text-xs uppercase tracking-widest text-white bg-stone-900 px-6 py-4 rounded-full group-hover:bg-primary group-hover:shadow-lg group-hover:-translate-y-1 transition-all duration-300">
-                 Leer reportaje
-                 <span className="material-symbols-outlined text-sm">east</span>
-               </span>
-               {noticia.autor?.nombre && (
-                 <div className="flex flex-col">
-                   <span className="text-[9px] text-stone-400 font-bold uppercase tracking-widest">Por</span>
-                   <span className="text-xs font-bold text-stone-900">{noticia.autor.nombre}</span>
-                 </div>
-               )}
-            </div>
-          </div>
+    <div className="pb-12 pt-0 md:pt-4">
+      {/* SECCIÓN PRINCIPAL: 12 columnas */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        {/* COLUMNA IZQUIERDA (CONTENIDO) */}
+        <div className="lg:col-span-8 flex flex-col gap-8">
           
-          {/* Image Content */}
-          <div className="lg:col-span-7 order-1 lg:order-2">
-            <div className="relative aspect-[4/3] lg:aspect-[16/10] overflow-hidden rounded-2xl shadow-2xl">
-              <img
-                src={noticia.imagen_principal || PLACEHOLDER_IMAGES.hero}
-                alt={noticia.titulo}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1.5s] border border-stone-100 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              
-              <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm text-stone-900 text-[10px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
-                Portada
-              </div>
-            </div>
-          </div>
-        </div>
-      </Link>
-    </section>
-  )
-}
+          {/* VISTA PORTADA */}
+          {!categoria && !busqueda ? (
+            <>
+              {/* Noticia Principal destacada */}
+              {noticiaPrincipal && (
+                <CardSection title="Lo Último" href="/">
+                  <MainNewsCard noticia={noticiaPrincipal} />
+                </CardSection>
+              )}
 
-function CategoriaSection({ categories, activeCategory }) {
-  return (
-    <section className="mb-12">
-      <div className="flex items-center justify-between mb-6 border-b-2 border-stone-900 pb-3">
-        <h2 className="font-headline text-3xl font-black text-stone-900 uppercase tracking-tight">
-          {activeCategory 
-            ? categories.find(c => c.slug === activeCategory)?.nombre || 'Sección' 
-            : 'Últimas Noticias'}
-        </h2>
-      </div>
-      <div className="flex flex-wrap gap-x-8 gap-y-3">
-        <Link 
-          href="/"
-          className={`text-sm font-black uppercase tracking-widest transition-colors hover:text-primary ${
-            !activeCategory ? 'text-primary border-b-2 border-primary pb-1' : 'text-stone-400'
-          }`}
-        >
-          Portada General
-        </Link>
-        {categories?.map((cat) => (
-          <Link
-            key={cat.id}
-            href={`/?categoria=${cat.slug}`}
-            className={`text-sm font-black uppercase tracking-widest transition-colors hover:text-primary ${
-              activeCategory === cat.slug ? 'text-primary border-b-2 border-primary pb-1' : 'text-stone-400'
-            }`}
-          >
-            {cat.nombre}
-          </Link>
-        ))}
-      </div>
-    </section>
-  )
-}
-
-function NewsGrid({ noticias }) {
-  if (!noticias || noticias.length === 0) {
-    return (
-      <section className="mb-20 text-center py-12 border-y border-stone-200">
-        <p className="text-stone-500 italic font-serif text-lg">No hay publicaciones recientes en esta sección.</p>
-      </section>
-    )
-  }
-
-  const mainNews = noticias[0]
-  const sideNews = noticias.slice(1, 6) // Show up to 5 on the side
-  const otherNews = noticias.slice(6)
-
-  return (
-    <section className="mb-16">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 mb-16">
-        <div className="lg:col-span-8 flex flex-col">
-          <div className="flex items-center gap-3 border-b-2 border-stone-900 pb-2 mb-6">
-             <span className="material-symbols-outlined text-stone-900 text-[22px]">auto_stories</span>
-             <h3 className="font-headline text-2xl font-black text-stone-900 uppercase tracking-tight">
-               A Fondo
-             </h3>
-          </div>
-          <MainNewsCard noticia={mainNews} />
-        </div>
-        <div className="lg:col-span-4 flex flex-col lg:border-l lg:border-stone-200 lg:pl-8">
-          <div className="flex items-center gap-3 border-b-2 border-primary pb-2 mb-4">
-             <div className="w-2.5 h-2.5 bg-primary rounded-sm animate-pulse"></div>
-             <h3 className="font-headline text-2xl font-black text-stone-900 uppercase tracking-tight">
-               Lo último
-             </h3>
-          </div>
-          <SideNewsList noticias={sideNews} />
-        </div>
-      </div>
-      
-      {otherNews.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-10 pt-10 border-t border-stone-200">
-          {otherNews.map((noticia) => (
-            <NewsCard key={noticia.id} noticia={noticia} />
-          ))}
-        </div>
-      )}
-    </section>
-  )
-}
-
-function MainNewsCard({ noticia }) {
-  if (!noticia) return null
-  
-  const dateStr = noticia.fecha_publicacion ? new Date(noticia.fecha_publicacion).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }) : ''
-
-  return (
-    <Link href={`/noticia/${noticia.slug}`} className="group block">
-      <div className="relative overflow-hidden aspect-video sm:aspect-[16/8] rounded-2xl shadow-lg mb-6">
-        <img
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-          alt={noticia.titulo}
-          src={noticia.imagen_principal || PLACEHOLDER_IMAGES.news}
-        />
-        <div className="absolute inset-0 bg-stone-900/10 group-hover:bg-transparent transition-colors"></div>
-        <div className="absolute top-4 left-4">
-          <span className="bg-white/95 backdrop-blur-sm text-stone-900 border border-stone-100 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full shadow-sm">
-            {noticia.categoria?.nombre || 'Actualidad'}
-          </span>
-        </div>
-      </div>
-      
-      <div className="px-1">
-        <h3 className="font-headline text-3xl sm:text-4xl font-black text-stone-900 mb-4 group-hover:text-primary transition-colors duration-300 leading-tight tracking-tight">
-          {noticia.titulo}
-        </h3>
-        <p className="text-stone-600 font-serif line-clamp-3 mb-6 text-lg">
-           {noticia.excerpt || noticia.contenido?.substring(0, 180) || 'Descubre los detalles de la noticia a continuación...'}
-        </p>
-        <div className="flex items-center gap-3 text-xs text-stone-500 font-bold uppercase tracking-widest">
-           {noticia.autor?.nombre && (
-             <>
-               <span className="text-stone-900 bg-stone-100 px-3 py-1 rounded-full">{noticia.autor.nombre}</span>
-               <span className="w-1 h-1 bg-stone-300 rounded-full"></span>
-             </>
-           )}
-           <span className="flex items-center gap-1">
-             <span className="material-symbols-outlined text-[14px]">event</span>
-             {dateStr}
-           </span>
-        </div>
-      </div>
-    </Link>
-  )
-}
-
-function SideNewsList({ noticias }) {
-  return (
-    <div className="flex flex-col">
-      {noticias.map((noticia, i) => {
-        const dateStr = noticia.fecha_publicacion ? new Date(noticia.fecha_publicacion).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }) : ''
-        return (
-          <Link href={`/noticia/${noticia.slug}`} key={noticia.id} className="group flex gap-4 items-start py-5 border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors -mx-4 px-4 rounded-xl">
-             <div className="font-headline text-4xl font-black text-stone-200 group-hover:text-primary transition-colors italic w-8 text-center shrink-0">
-                {i + 1}
-             </div>
-             <div className="flex-1 flex flex-col justify-center">
-                <span className="text-secondary text-[9px] font-bold uppercase tracking-widest block mb-1">
-                  {noticia.categoria?.nombre || 'Actualidad'}
-                </span>
-                <h4 className="font-headline font-bold text-stone-900 leading-snug lg:text-lg mb-2 group-hover:text-primary transition-colors">
-                  {noticia.titulo}
-                </h4>
-                <div className="flex items-center gap-2 text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-auto">
-                   <span>{dateStr}</span>
+              {/* Secciones por Categoría e intercalado de anuncios */}
+              {mainSections.map((section, idx) => (
+                <div key={section.slug} className="mt-4">
+                  <CategoryCard section={section} />
+                  
+{/* Publicidad intercalada - visible pero no al final */}
+                  {idx === 1 && anuncios.length > 0 && (
+                    <div className="my-8">
+                      <PublicidadSection 
+                        title="Nuestros Anunciantes" 
+                        anuncios={anuncios.slice(0, 4)} 
+                        gridCols="grid-cols-2 md:grid-cols-4"
+                      />
+                    </div>
+                  )}
                 </div>
-             </div>
-          </Link>
-        )
-      })}
+              ))}
+            </>
+          ) : (
+            /* VISTA CATEGORÍA/BÚSQUEDA */
+            <NewsPageGrid noticias={noticias} title={categoria || busqueda} />
+          )}
+        </div>
+
+        {/* COLUMNA DERECHA (SIDEBAR) */}
+        <div className="lg:col-span-4 flex flex-col gap-8">
+          {!categoria && !busqueda ? (
+            <>
+              {/* Secciones laterales */}
+              {sidebarSections.map((section) => (
+                <CategoryCard key={section.slug} section={section} type="sidebar" />
+              ))}
+              
+              {/* Bloque de Opinión */}
+              <OpinionSection firmas={firmas} />
+            </>
+          ) : (
+            <>
+              {/* En vistas de interior también mantenemos el sidebar activo */}
+              <OpinionSection firmas={firmas} />
+              <PublicidadSection anuncios={anuncios.slice(0, 3)} title="Publicidad" />
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* FOOTER SOCIAL SECTION */}
+      <div className="-mx-4 sm:-mx-6 lg:-mx-8 mt-16">
+        <SocialSection redes={redes} />
+      </div>
     </div>
   )
 }
 
-function NewsCard({ noticia, horizontal = false }) {
-  const dateStr = noticia.fecha_publicacion ? new Date(noticia.fecha_publicacion).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' }) : ''
-  
+// ==========================================
+// COMPONENTES DE ESTRUCTURA
+// ==========================================
+
+function CardSection({ title, children, href }) {
   return (
-    <Link href={`/noticia/${noticia.slug}`} className="group block">
-      <div className={horizontal ? 'flex gap-4 items-center sm:items-start' : 'flex flex-col gap-4'}>
-        <div className={`relative overflow-hidden rounded-xl shadow-sm ${horizontal ? 'w-24 h-24 sm:w-32 sm:aspect-video sm:h-auto shrink-0' : 'aspect-video'}`}>
-          <img
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            alt={noticia.titulo}
-            src={noticia.imagen_principal || PLACEHOLDER_IMAGES.news}
-          />
+    <section className="bg-white border border-[#E5E7EB] rounded-2xl p-5 md:p-8 shadow-[0_4px_20px_-5px_rgba(0,0,0,0.04)] overflow-hidden transition-all duration-300">
+      <div className="flex justify-between items-center border-b border-[#E5E7EB] pb-4 mb-6">
+         <h2 className="text-xl font-bold text-primary tracking-tight font-headline flex items-center gap-2">
+           <span className="w-1.5 h-6 bg-primary rounded-full"></span>
+           {title}
+         </h2>
+         {href && (
+           <Link href={href} className="text-stone-300 hover:text-primary transition-all p-2 hover:bg-stone-50 rounded-full">
+             <span className="material-symbols-outlined text-[20px]">east</span>
+           </Link>
+         )}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+function VerMasButton({ slug, name }) {
+  return (
+    <div className="mt-8 pt-6 border-t border-stone-100 flex justify-center">
+      <Link
+        href={`/?categoria=${slug}`}
+        className="group inline-flex items-center gap-2.5 bg-stone-50 hover:bg-primary text-stone-700 hover:text-white text-sm font-bold px-7 py-3.5 rounded-xl border border-stone-200 hover:border-primary shadow-sm hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 hover:-translate-y-0.5"
+      >
+        Ver más noticias de {name}
+        <span className="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">east</span>
+      </Link>
+    </div>
+  )
+}
+
+function CategoryCard({ section, type = 'main' }) {
+  const { name, slug, news, layout, totalCount } = section
+  
+  if (!news || news.length === 0) {
+    return (
+      <CardSection title={name} href={`/?categoria=${slug}`}>
+        <div className="flex flex-col items-center justify-center py-12 text-center">
+          <span className="material-symbols-outlined text-6xl text-stone-200 mb-4 block">explore</span>
+          <h3 className="text-lg font-bold text-stone-800 mb-2 font-headline">Próximamente</h3>
+          <p className="text-stone-500 font-serif max-w-md">
+            Estamos preparando contenido exclusivo para esta categoría. ¡Muy pronto encontrarás las mejores notas aquí!
+          </p>
+          <Link 
+            href={`/?categoria=${slug}`}
+            className="mt-6 inline-flex items-center gap-2 bg-primary text-white text-sm font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-stone-900 transition-all"
+          >
+            Ver categoría <span className="material-symbols-outlined text-[18px]">east</span>
+          </Link>
         </div>
-        <div className={horizontal ? 'flex-1 min-w-0 flex flex-col justify-center' : ''}>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-primary text-[9px] font-bold uppercase tracking-widest">
-              {noticia.categoria?.nombre || 'Actualidad'}
-            </span>
-          </div>
-          <h4 className={`font-headline font-black text-stone-900 group-hover:text-primary transition-colors leading-snug line-clamp-3 ${horizontal ? 'text-sm sm:text-base' : 'text-xl mb-3'} tracking-tight`}>
-            {noticia.titulo}
-          </h4>
-          {!horizontal && (
-             <div className="text-[10px] text-stone-400 font-bold uppercase tracking-widest flex items-center gap-1">
-               <span className="material-symbols-outlined text-[12px]">schedule</span>
-               {dateStr}
+      </CardSection>
+    )
+  }
+
+  if (type === 'sidebar' || layout === 'list') {
+    const displayCount = 5
+    const hasMore = totalCount > displayCount
+    return (
+      <CardSection title={name} href={`/?categoria=${slug}`}>
+         <div className="flex flex-col space-y-6">
+           {news.slice(0, displayCount).map((noticia, i) => (
+             <div key={noticia.id} className={i !== 0 ? "pt-6 border-t border-stone-100" : ""}>
+               <SidebarNewsItem noticia={noticia} />
              </div>
-          )}
+           ))}
+         </div>
+         {hasMore && <VerMasButton slug={slug} name={name} />}
+      </CardSection>
+    )
+  }
+
+  if (layout === 'grid') {
+    const displayCount = 3
+    const hasMore = totalCount > displayCount
+    return (
+      <CardSection title={name} href={`/?categoria=${slug}`}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {news.slice(0, displayCount).map(noticia => (
+             <GridNewsItem key={noticia.id} noticia={noticia} />
+          ))}
         </div>
+        {hasMore && <VerMasButton slug={slug} name={name} />}
+      </CardSection>
+    )
+  }
+
+  if (layout === 'double') {
+     const news1 = news[0]
+     const news2 = news[1]
+     const news3 = news[2]
+     const hasMore = totalCount > 3
+     return (
+        <CardSection title={name} href={`/?categoria=${slug}`}>
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-10 divide-y sm:divide-y-0 sm:divide-x divide-stone-100">
+              {news1 && <div className="sm:pr-5"><TopDownNewsItem noticia={news1} /></div>}
+              {news2 && <div className="pt-8 sm:pt-0 sm:pl-5"><TopDownNewsItem noticia={news2} /></div>}
+           </div>
+           {news3 && (
+             <div className="mt-8 pt-8 border-t border-stone-100">
+               <SidebarNewsItem noticia={news3} />
+             </div>
+           )}
+           {hasMore && <VerMasButton slug={slug} name={name} />}
+        </CardSection>
+     )
+  }
+
+  // DEFAULT MIXED (Estilo Altiplano)
+  const mainNews = news[0]
+  const sideNews = news.slice(1, 5)
+  const hasMore = totalCount > 5
+  return (
+    <CardSection title={name} href={`/?categoria=${slug}`}>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-7">
+          <MainNewsCard noticia={mainNews} isMixed={true} />
+        </div>
+        <div className="lg:col-span-5 flex flex-col space-y-5">
+          {sideNews.map((noticia, i) => (
+            <div key={noticia.id} className={i !== 0 ? "pt-5 border-t border-stone-100" : ""}>
+               <SidebarNewsItem noticia={noticia} compact={true} />
+            </div>
+          ))}
+        </div>
+      </div>
+      {hasMore && <VerMasButton slug={slug} name={name} />}
+    </CardSection>
+  )
+}
+
+// ==========================================
+// TARJETAS DE NOTICIAS
+// ==========================================
+
+function MainNewsCard({ noticia, isMixed = false }) {
+  if (!noticia) return null
+  const dateStr = noticia.fecha_publicacion ? new Date(noticia.fecha_publicacion).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+
+  return (
+    <Link href={`/noticia/${noticia.slug}`} className="group block flex flex-col h-full cursor-pointer">
+       <div className="relative aspect-[16/9] rounded-2xl overflow-hidden mb-6 shadow-md border border-stone-100">
+         <ImageWithFallback
+           src={noticia.imagen_principal}
+           alt={noticia.titulo}
+           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+         />
+         <div className="absolute top-4 left-4">
+           <span className="bg-primary/95 text-white text-[11px] font-black px-3 py-1 rounded-full shadow-lg backdrop-blur-sm uppercase tracking-wider">
+             {noticia.categoria?.nombre || 'Actualidad'}
+           </span>
+         </div>
+       </div>
+
+       <div className="flex items-center gap-3 text-[12px] font-medium mb-4 text-stone-500">
+         <span className="flex items-center gap-1.5 font-serif italic">
+           <span className="material-symbols-outlined text-[16px]">schedule</span> {dateStr}
+         </span>
+         {noticia.destacado && (
+           <span className="bg-amber-100 text-amber-700 text-[10px] font-black px-2 py-0.5 rounded-md flex items-center gap-1">
+             <span className="material-symbols-outlined text-[12px] fill-amber-700">star</span> DESTACADO
+           </span>
+         )}
+       </div>
+
+       <h3 className={`font-bold text-stone-900 leading-[1.2] mb-4 group-hover:text-primary transition-colors font-headline ${isMixed ? 'text-[1.5rem] md:text-[1.8rem]' : 'text-[1.8rem] md:text-[2.2rem]'}`}>
+         {noticia.titulo}
+       </h3>
+
+       <p className="text-[14px] md:text-[15px] text-stone-600 line-clamp-3 mb-8 leading-relaxed font-serif">
+         {noticia.excerpt || noticia.contenido?.substring(0, 180) || 'Descubre los detalles de esta información exclusiva de GaamaTV.'}
+       </p>
+
+       <div className="mt-auto">
+         <span className="inline-flex items-center gap-2 bg-primary text-white text-[14px] font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-stone-900 transition-all duration-300 hover:translate-x-1">
+           Leer artículo completo <span className="material-symbols-outlined text-[18px]">east</span>
+         </span>
+       </div>
+    </Link>
+  )
+}
+
+function SidebarNewsItem({ noticia, compact = false }) {
+  if (!noticia) return null
+  const dateStr = noticia.fecha_publicacion ? new Date(noticia.fecha_publicacion).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+  return (
+    <Link href={`/noticia/${noticia.slug}`} className="group flex gap-5 items-start cursor-pointer">
+      <div className={`relative shrink-0 rounded-xl overflow-hidden shadow-sm border border-stone-100 ${compact ? 'w-[100px] h-[75px] md:w-[120px] md:h-[85px]' : 'w-[90px] h-[65px] md:w-[110px] md:h-[80px]'}`}>
+         <ImageWithFallback
+           src={noticia.imagen_principal}
+           alt={noticia.titulo}
+           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+         />
+      </div>
+      <div className="flex flex-col flex-1 min-w-0">
+         <div className="flex items-center gap-1.5 text-[11px] text-stone-400 font-serif mb-1.5 italic">
+           <span className="material-symbols-outlined text-[14px]">schedule</span> {dateStr}
+         </div>
+         <h4 className={`font-bold text-stone-900 leading-[1.3] group-hover:text-primary transition-colors font-headline ${compact ? 'text-[15px] line-clamp-2' : 'text-[14px] line-clamp-3'}`}>
+           {noticia.titulo}
+         </h4>
       </div>
     </Link>
   )
 }
 
-function PublicidadSection({ anuncios, error }) {
-  const isDev = process.env.NODE_ENV === 'development'
-  
-  const placeholderAds = [
-    {
-      id: 'placeholder-1',
-      titulo: 'Tu Negocio Aquí',
-      descripcion_corta: '¿Quieres aparecer en GaamaTV? Contáctanos para publicar tu publicidad.',
-      imagen_url: null,
-      enlace_url: '#',
-      boton_texto: 'Más información',
-      isPlaceholder: true
-    },
-    {
-      id: 'placeholder-2',
-      titulo: 'Promociona tu Marca',
-      descripcion_corta: 'Alcanza a miles de usuarios del Oriente Antioqueño con nuestra plataforma.',
-      imagen_url: null,
-      enlace_url: '#',
-      boton_texto: 'Ver planes',
-      isPlaceholder: true
-    },
-    {
-      id: 'placeholder-3',
-      titulo: 'Amplía tu Alcance',
-      descripcion_corta: 'Convierte visitantes en clientes con publicidad efectiva y segmentada.',
-      imagen_url: null,
-      enlace_url: '#',
-      boton_texto: 'Contáctanos',
-      isPlaceholder: true
-    }
-  ]
+function GridNewsItem({ noticia }) {
+  return (
+    <Link href={`/noticia/${noticia.slug}`} className="group block relative rounded-2xl overflow-hidden shadow-md aspect-[4/3] cursor-pointer">
+      <ImageWithFallback
+        src={noticia.imagen_principal}
+        alt={noticia.titulo}
+        className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
 
-  const adsToShow = (anuncios && anuncios.length > 0) ? anuncios : (isDev ? placeholderAds : [])
+      <div className="absolute bottom-0 left-0 right-0 p-5 z-10 flex flex-col justify-end">
+        <span className="text-[10px] text-primary bg-white/90 backdrop-blur-sm self-start px-2 py-0.5 rounded font-black mb-3 uppercase tracking-tighter">
+          {noticia.categoria?.nombre || 'General'}
+        </span>
+        <h4 className="font-bold text-white text-[16px] leading-tight line-clamp-3 group-hover:text-stone-200 transition-colors">
+          {noticia.titulo}
+        </h4>
+      </div>
+    </Link>
+  )
+}
 
-  if (adsToShow.length === 0) {
-    return null
+function TopDownNewsItem({ noticia }) {
+  if (!noticia) return null
+  const dateStr = noticia.fecha_publicacion ? new Date(noticia.fecha_publicacion).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+  return (
+    <Link href={`/noticia/${noticia.slug}`} className="group flex flex-col h-full cursor-pointer">
+      <div className="flex items-center justify-between mb-4">
+         <div className="flex items-center gap-1.5 text-[11px] text-stone-400 font-serif italic">
+           <span className="material-symbols-outlined text-[14px]">schedule</span> {dateStr}
+         </div>
+         <span className="text-primary text-[10px] font-black uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded ring-1 ring-primary/20">
+            {noticia.categoria?.nombre || 'General'}
+         </span>
+      </div>
+      <div className="relative aspect-video rounded-xl overflow-hidden mb-4 shadow-sm">
+         <ImageWithFallback
+           src={noticia.imagen_principal}
+           alt={noticia.titulo}
+           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+         />
+      </div>
+      <h3 className="font-bold text-[1.15rem] text-stone-900 leading-snug mb-3 group-hover:text-primary transition-colors line-clamp-3 font-headline">
+         {noticia.titulo}
+      </h3>
+      <p className="text-[13px] text-stone-500 line-clamp-3 leading-relaxed font-serif">
+        {noticia.excerpt || noticia.contenido?.substring(0, 120) || 'Más detalles en la nota completa.'}
+      </p>
+    </Link>
+  )
+}
+
+// ==========================================
+// VISTAS DE PÁGINA
+// ==========================================
+
+function NewsPageGrid({ noticias, title }) {
+  if (!noticias || noticias.length === 0) {
+    return (
+      <CardSection title={`Resultados: ${title}`}>
+        <div className="p-12 text-center">
+          <span className="material-symbols-outlined text-6xl text-stone-200 mb-4 block">newspaper</span>
+          <h2 className="text-xl font-bold text-stone-800 mb-2 font-headline">No encontramos noticias</h2>
+          <p className="text-stone-500 font-serif">Intenta con otra categoría o vuelve al inicio.</p>
+          <Link href="/" className="inline-flex mt-8 bg-stone-100 px-6 py-2 rounded-full text-stone-600 font-bold hover:bg-primary hover:text-white transition-all">
+            Volver a la portada
+          </Link>
+        </div>
+      </CardSection>
+    )
   }
 
   return (
-    <section className="mb-16 border-y border-stone-200 py-10 bg-stone-50 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-12 lg:px-12">
-      <div className="flex items-center justify-between mb-8">
-        <h2 className="font-headline text-lg font-black text-stone-900 uppercase tracking-widest border-l-4 border-amber-500 pl-3">
-          Publicidad Institucional
-        </h2>
-      </div>
-      {error && isDev && (
-        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-700 text-sm">
-          <span className="font-semibold">Nota de desarrollo:</span> {error}
+    <div className="flex flex-col gap-10">
+       <CardSection title={`Resultados: ${title}`} href="/">
+          <MainNewsCard noticia={noticias[0]} />
+       </CardSection>
+
+       {noticias.length > 1 && (
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+           {noticias.slice(1).map((noticia) => (
+             <div key={noticia.id} className="bg-white border border-stone-100 rounded-2xl p-5 shadow-sm hover:shadow-xl transition-all duration-500">
+               <SidebarNewsItem noticia={noticia} compact={true} />
+             </div>
+           ))}
+         </div>
+       )}
+    </div>
+  )
+}
+
+function PublicidadSection({ anuncios, title = "Publicidad", variant = 'default', gridCols = "grid-cols-1 sm:grid-cols-2" }) {
+  if (!anuncios || anuncios.length === 0) return null
+
+  if (variant === 'hero') {
+    const mainAd = anuncios[0]
+    return (
+      <a 
+        href={mainAd.enlace_url || '#'} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="group relative block w-full aspect-[21/9] md:aspect-[21/7] rounded-3xl overflow-hidden shadow-2xl border-4 border-white cursor-pointer transform transition-transform duration-500 hover:scale-[1.01]"
+      >
+        <img 
+          src={mainAd.imagen_url || '/placeholder-ad.jpg'} 
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-110"
+          alt={mainAd.titulo}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/30 to-transparent flex flex-col justify-center p-10 md:p-14">
+            <div className="flex items-center gap-2 mb-6">
+               <span className="w-8 h-0.5 bg-amber-400"></span>
+               <span className="bg-amber-400/20 backdrop-blur-md text-amber-400 text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded">Espacio Publicitario</span>
+            </div>
+            <h3 className="text-white text-3xl md:text-5xl font-black max-w-lg leading-[1.1] mb-6 group-hover:text-amber-400 transition-colors drop-shadow-2xl">
+              {mainAd.titulo}
+            </h3>
+            <p className="text-stone-300 text-sm md:text-lg max-w-md line-clamp-2 mb-8 font-medium leading-relaxed">
+              {mainAd.descripcion_corta}
+            </p>
+            <div className="flex items-center gap-3 text-white font-black text-sm uppercase tracking-widest self-start transition-all group-hover:gap-5">
+              <span className="bg-amber-400 text-black px-6 py-3 rounded-xl flex items-center gap-2">
+                VER OFERTA <span className="material-symbols-outlined text-lg">north_east</span>
+              </span>
+            </div>
         </div>
-      )}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {adsToShow.map((anuncio, index) => (
+      </a>
+    )
+  }
+
+  return (
+    <CardSection title={title}>
+      <div className={`grid ${gridCols} gap-8`}>
+        {anuncios.map((anuncio) => (
           <a
-            key={anuncio.id || index}
+            key={anuncio.id}
             href={anuncio.enlace_url || '#'}
-            target={anuncio.isPlaceholder ? '_self' : '_blank'}
+            target="_blank"
             rel="noopener noreferrer"
-            className={`group flex flex-col bg-white border border-stone-200 hover:border-amber-400 hover:shadow-lg transition-all duration-300 ${anuncio.isPlaceholder ? 'opacity-75' : ''}`}
+            className="group flex flex-col bg-stone-50 border border-stone-200/60 rounded-3xl hover:border-primary/40 hover:bg-white transition-all duration-500 overflow-hidden cursor-pointer hover:shadow-xl hover:-translate-y-1"
           >
-            <div className="relative h-48 overflow-hidden">
+            <div className="relative h-48 md:h-56">
                <img
-                  src={anuncio.imagen_url || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop'}
+                  src={anuncio.imagen_url || '/placeholder-ad.jpg'}
                   alt={anuncio.titulo}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="w-full h-full object-cover transition-transform duration-[1500ms] group-hover:scale-110"
                 />
-              <div className="absolute top-2 right-2">
-                <span className={`bg-black/80 text-white text-[9px] font-bold uppercase tracking-widest px-2 py-0.5`}>
-                  {anuncio.isPlaceholder ? 'Espacio Disponible' : 'Anuncio'}
+              <div className="absolute top-4 right-4">
+                <span className="bg-black/80 backdrop-blur-md text-yellow-400 text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-xl border border-white/20">
+                  PUBLICIDAD
                 </span>
               </div>
             </div>
-            <div className="p-5 flex-1 flex flex-col">
-              <h3 className="font-headline text-lg font-bold text-stone-900 mb-2 group-hover:text-amber-600 transition-colors duration-300">
+            <div className="p-7 flex flex-col flex-1">
+              <h3 className="text-lg md:text-xl font-bold text-stone-900 mb-3 group-hover:text-primary transition-colors font-headline leading-tight">
                 {anuncio.titulo}
               </h3>
-              <p className="text-stone-600 font-serif text-sm leading-relaxed mb-4 flex-1">
+              <p className="text-stone-500 text-[13px] leading-relaxed mb-6 line-clamp-3 font-serif italic opacity-80">
                 {anuncio.descripcion_corta}
               </p>
-              {anuncio.boton_texto && (
-                <span className="uppercase text-[11px] font-bold tracking-widest text-amber-600 group-hover:text-amber-700 mt-auto flex items-center gap-1">
-                  {anuncio.boton_texto} <span className="material-symbols-outlined text-sm">arrow_outward</span>
+              <div className="mt-auto pt-4 border-t border-stone-100 flex items-center justify-between">
+                <span className="text-[11px] font-black uppercase tracking-[0.15em] text-primary flex items-center gap-1.5 transition-all group-hover:gap-3">
+                  Visitar sitio <span className="material-symbols-outlined text-[16px]">open_in_new</span>
                 </span>
-              )}
+                <span className="material-symbols-outlined text-stone-300 group-hover:text-primary transition-colors">ads_click</span>
+              </div>
             </div>
           </a>
         ))}
       </div>
-    </section>
+    </CardSection>
   )
 }
 
-
 function OpinionSection({ firmas }) {
+  if (!firmas || !firmas.length) return null
   return (
-    <section className="mb-16">
-      <h2 className="text-center font-headline text-2xl sm:text-3xl font-black text-stone-900 border-y-2 border-stone-900 py-4 mb-10 uppercase tracking-[0.2em]">
-        Firmas y Opinión
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-0 lg:px-12">
-        {firmas && firmas.length > 0 ? (
-          firmas.map((firma) => (
-            <div key={firma.id} className="flex flex-col items-center text-center group">
-              <img 
-                className="w-24 h-24 rounded-full object-cover grayscale group-hover:grayscale-0 border-2 border-stone-200 group-hover:border-primary transition-all duration-500 mb-4" 
-                alt={firma.nombre} 
-                src={firma.imagen_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face'} 
-              />
-              <h4 className="font-bold text-stone-900 text-sm uppercase tracking-widest mb-1">{firma.nombre}</h4>
-              <p className="text-primary text-[10px] font-bold uppercase tracking-widest mb-4">{firma.rol}</p>
-              <a className="font-headline text-lg sm:text-xl font-black italic text-stone-800 group-hover:text-primary transition-colors leading-snug" href="#">
-                &ldquo;{firma.cita}&rdquo;
-              </a>
-            </div>
-          ))
-        ) : (
-          <div className="col-span-3 text-center text-stone-500 py-8 italic">No hay firmas configuradas aún.</div>
-        )}
-        
-        {/* Placeholder Tu Firma a la derecha, pero solo si no colapsa, lo ponemos al final */}
-        <div className="flex flex-col items-center text-center group hidden lg:flex">
-          <div className="w-24 h-24 rounded-full bg-stone-100 flex items-center justify-center border-2 border-dashed border-stone-300 group-hover:border-primary transition-colors duration-500 mb-4 text-stone-400 group-hover:text-primary">
-            <span className="material-symbols-outlined text-3xl">edit</span>
+    <CardSection title="Opinión y Firmas">
+      <div className="flex flex-col divide-y divide-stone-100">
+        {firmas.map((firma, i) => (
+          <div key={firma.id} className={`${i !== 0 ? "pt-6 mt-6" : ""} group cursor-pointer`}>
+             <div className="flex gap-4">
+               <div className="relative">
+                 <img 
+                   className="w-16 h-16 rounded-full object-cover grayscale group-hover:grayscale-0 border-2 border-stone-100 group-hover:border-primary transition-all duration-500 shrink-0" 
+                   alt={firma.nombre} 
+                   src={firma.imagen_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face'} 
+                 />
+                 <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-md">
+                   <div className="w-3 h-3 bg-primary rounded-full ring-2 ring-white"></div>
+                 </div>
+               </div>
+               <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-stone-900 text-[15px] mb-1 group-hover:text-primary transition-colors font-headline">{firma.nombre}</h4>
+                  <p className="text-stone-400 text-[10px] uppercase font-black tracking-widest mb-2">{firma.rol}</p>
+                  <p className="text-[14px] text-stone-600 font-serif italic line-clamp-3 leading-snug">
+                    &ldquo;{firma.cita}&rdquo;
+                  </p>
+               </div>
+             </div>
           </div>
-          <h4 className="font-bold text-stone-900 text-sm uppercase tracking-widest mb-1">Tu Firma</h4>
-          <p className="text-stone-500 text-[10px] font-bold uppercase tracking-widest mb-4">Espacio de Columnistas</p>
-          <a className="font-headline text-lg text-stone-600 transition-colors leading-snug hover:opacity-80" href="#">
-            Envía tus cartas al editor y haz escuchar tu voz en nuestra tribuna abierta.
-          </a>
-        </div>
+        ))}
       </div>
-    </section>
+    </CardSection>
   )
 }
 
 function SocialSection({ redes }) {
-  const socialLinks = redes && redes.length > 0 ? redes : []
-
+  if (!redes || redes.length === 0) return null
   return (
-    <section className="mb-0 border-t border-stone-200 pt-8 pb-12">
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-        <h3 className="font-headline text-xl font-black text-stone-900 uppercase tracking-widest border-l-4 border-primary pl-3">
-          Nuestras Redes
-        </h3>
-        <div className="flex flex-wrap items-center gap-4 sm:gap-8 justify-center">
-          {socialLinks.map((link, index) => (
+    <div className="bg-stone-900 py-12">
+      <div className="max-w-7xl mx-auto px-4 flex flex-col items-center">
+        <h3 className="text-white font-black text-xl mb-8 uppercase tracking-[0.3em] opacity-30 italic">CONÉCTATE</h3>
+        <div className="flex flex-wrap justify-center gap-6 sm:gap-10">
+          {redes.map((link, index) => (
             <a 
               key={index} 
-              className="group flex items-center gap-3 hover:text-primary transition-colors" 
+              className="flex items-center gap-3 text-stone-400 hover:text-white transition-all duration-300 hover:scale-110 group" 
               href={link.url} 
               target="_blank" 
               rel="noopener noreferrer"
             >
-              <div className="w-10 h-10 border border-stone-200 rounded-full flex items-center justify-center group-hover:border-primary transition-colors">
-                <span className="material-symbols-outlined text-stone-500 group-hover:text-primary text-xl">{link.icon}</span>
+              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-primary group-hover:border-primary transition-all">
+                <span className="material-symbols-outlined text-xl">{link.icon}</span>
               </div>
-              <div className="leading-tight">
-                <span className="text-sm font-bold text-stone-900 block group-hover:text-primary transition-colors">{link.handle}</span>
-                <span className="text-[10px] uppercase font-bold tracking-widest text-stone-400">{link.platform}</span>
-              </div>
+              <span className="text-sm font-black uppercase tracking-widest group-hover:tracking-[0.2em] transition-all">{link.platform}</span>
             </a>
           ))}
         </div>
       </div>
-    </section>
+    </div>
   )
 }

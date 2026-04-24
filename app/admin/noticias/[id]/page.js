@@ -12,7 +12,7 @@ export default function EditarNoticia() {
   const [categorias, setCategorias] = useState([])
   const [autores, setAutores] = useState([])
   const [showNuevaCategoria, setShowNuevaCategoria] = useState(false)
-  const [nuevaCategoria, setNuevaCategoria] = useState({ nombre: '', slug: '', color: '#10b981', orden: 0 })
+  const [nuevaCategoria, setNuevaCategoria] = useState({ nombre: '', slug: '', color: '#10b981', orden: 0, tipo: 'seccion' })
   
   const [form, setForm] = useState({
     titulo: '',
@@ -101,13 +101,14 @@ export default function EditarNoticia() {
       const categoriaData = {
         ...nuevaCategoria,
         slug,
-        activa: true
+        activa: true,
+        tipo: nuevaCategoria.tipo || 'seccion'
       }
       const nuevaCat = await createCategoria(categoriaData)
       setCategorias(prev => [...prev, nuevaCat])
       setForm(prev => ({ ...prev, categoria_id: nuevaCat.id }))
       setShowNuevaCategoria(false)
-      setNuevaCategoria({ nombre: '', slug: '', color: '#10b981', orden: 0 })
+      setNuevaCategoria({ nombre: '', slug: '', color: '#10b981', orden: 0, tipo: 'seccion' })
     } catch (error) {
       alert('Error al crear categoría: ' + error.message)
     }
@@ -135,7 +136,7 @@ export default function EditarNoticia() {
       // Limpiar el objeto para enviar solo campos válidos a la DB
       const noticiaData = {
         titulo: form.titulo,
-        slug: form.slug || generateSlug(form.titulo),
+        slug: generateSlug(form.slug || form.titulo),
         contenido: form.contenido,
         excerpt: form.excerpt,
         categoria_id: form.categoria_id,
@@ -150,10 +151,15 @@ export default function EditarNoticia() {
       }
 
       await updateNoticia(params.id, noticiaData)
-      router.push('/admin/noticias')
+      
+      // Force navigation to admin list
+      setTimeout(() => {
+        router.push('/admin/noticias')
+        router.refresh()
+      }, 500)
     } catch (error) {
-      alert('Error al actualizar la noticia: ' + error.message)
-    } finally {
+      console.error('Error updating news:', error)
+      alert('Error al actualizar la noticia: ' + (error.message || 'Error desconocido'))
       setLoading(false)
     }
   }
@@ -329,6 +335,45 @@ export default function EditarNoticia() {
                         title="Color de la sección"
                       />
                     </div>
+                    <div>
+                      <label className="block text-xs font-bold text-stone-700 mb-2">Tipo de Categoría</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <label
+                          className={`py-2 px-3 rounded-lg border-2 transition-all font-bold text-xs capitalize cursor-pointer flex items-center justify-center gap-2 ${
+                            nuevaCategoria.tipo === 'seccion'
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-stone-200 text-stone-500 hover:border-primary/50'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="tipo"
+                            value="seccion"
+                            checked={nuevaCategoria.tipo === 'seccion'}
+                            onChange={handleNuevaCategoriaChange}
+                            className="sr-only"
+                          />
+                          Sección
+                        </label>
+                        <label
+                          className={`py-2 px-3 rounded-lg border-2 transition-all font-bold text-xs capitalize cursor-pointer flex items-center justify-center gap-2 ${
+                            nuevaCategoria.tipo === 'ciudad'
+                              ? 'border-blue-500 bg-blue-50 text-blue-600'
+                              : 'border-stone-200 text-stone-500 hover:border-blue-500/50'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="tipo"
+                            value="ciudad"
+                            checked={nuevaCategoria.tipo === 'ciudad'}
+                            onChange={handleNuevaCategoriaChange}
+                            className="sr-only"
+                          />
+                          Ciudad
+                        </label>
+                      </div>
+                    </div>
                     <div className="flex gap-3">
                       <input
                         type="number"
@@ -349,7 +394,7 @@ export default function EditarNoticia() {
                         type="button"
                         onClick={() => {
                           setShowNuevaCategoria(false)
-                          setNuevaCategoria({ nombre: '', slug: '', color: '#10b981', orden: 0 })
+                          setNuevaCategoria({ nombre: '', slug: '', color: '#10b981', orden: 0, tipo: 'seccion' })
                         }}
                         className="px-4 py-2 bg-white border border-stone-200 text-stone-600 font-bold rounded-lg hover:bg-stone-50 hover:text-stone-900 transition-colors"
                       >

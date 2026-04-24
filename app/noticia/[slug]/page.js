@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import ViewTracker from '@/app/components/ViewTracker'
 import ShareButtons from '@/app/components/ShareButtons'
+import ImageWithFallback from '@/app/components/ImageWithFallback'
 
 export const revalidate = 30
 
@@ -20,7 +21,8 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }) {
   try {
-    const noticia = await getNoticiaBySlug(params.slug)
+    const { slug } = await params
+    const noticia = await getNoticiaBySlug(slug)
     return {
       title: `${noticia.titulo} | GaamaTV`,
       description: noticia.excerpt || noticia.contenido?.substring(0, 160),
@@ -33,9 +35,10 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function NoticiaPage({ params }) {
+  const { slug } = await params
   let noticia
   try {
-    noticia = await getNoticiaBySlug(params.slug)
+    noticia = await getNoticiaBySlug(slug)
   } catch (error) {
     notFound()
   }
@@ -70,7 +73,7 @@ function ArticleContent({ noticia, youtubeId }) {
         <div className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold tracking-widest uppercase mb-6 rounded-sm">
           {noticia.categoria?.nombre || 'Noticias'}
         </div>
-        <h1 className="font-headline text-3xl md:text-5xl lg:text-6xl font-bold leading-tight text-on-surface mb-8">
+        <h1 className="font-headline text-2xl md:text-4xl lg:text-5xl font-bold leading-tight text-on-surface mb-8">
           {noticia.titulo}
         </h1>
         <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 border-y border-outline-variant/20 py-6">
@@ -115,17 +118,12 @@ function ArticleContent({ noticia, youtubeId }) {
       ) : (
         <figure className="w-full mb-16 px-0 sm:px-4">
           <div className="w-full bg-stone-100 overflow-hidden rounded-xl shadow-sm relative">
-            {noticia.imagen_principal ? (
-              <img 
-                alt={noticia.titulo} 
-                src={noticia.imagen_principal} 
-                className="w-full h-auto max-h-[800px] object-contain bg-stone-50"
-              />
-            ) : (
-              <div className="aspect-video w-full bg-gradient-to-br from-primary/20 to-secondary/30 flex items-center justify-center">
-                <span className="material-symbols-outlined text-6xl text-primary/30">image</span>
-              </div>
-            )}
+            <ImageWithFallback
+              src={noticia.imagen_principal}
+              alt={noticia.titulo}
+              className="w-full h-auto max-h-[800px] object-contain bg-stone-50"
+              fallbackSrc="/placeholder-news.svg"
+            />
           </div>
         </figure>
       )}
@@ -151,21 +149,6 @@ function ArticleContent({ noticia, youtubeId }) {
           </div>
         </article>
 
-        <aside className="w-full lg:w-80 shrink-0">
-          <div className="sticky top-28 space-y-10">
-            <div className="bg-stone-900 p-8 rounded-xl text-stone-50">
-              <span className="material-symbols-outlined text-primary mb-4">mail</span>
-              <h4 className="font-headline text-xl font-bold mb-2">Oriente Al Día</h4>
-              <p className="text-sm text-stone-400 mb-6 leading-relaxed">
-                Suscríbete para recibir lo mejor de la actualidad regional en tu correo.
-              </p>
-              <form className="space-y-4">
-                <input className="w-full bg-white/10 border-none rounded-lg text-sm placeholder:text-stone-500 focus:ring-2 focus:ring-primary py-3" placeholder="Tu correo electrónico" type="email" />
-                <button className="w-full bg-primary py-3 rounded-lg text-sm font-bold hover:bg-primary-container transition-colors">Suscribirme</button>
-              </form>
-            </div>
-          </div>
-        </aside>
       </div>
     </main>
   )
@@ -184,17 +167,12 @@ function RelatedNews({ noticias }) {
         {noticias.map((noticia) => (
           <Link key={noticia.id} href={`/noticia/${noticia.slug}`} className="group cursor-pointer">
             <div className="aspect-video mb-3 rounded-lg overflow-hidden bg-surface-container-low transition-all group-hover:shadow-md">
-              {noticia.imagen_principal ? (
-                <img 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                  alt={noticia.titulo}
-                  src={noticia.imagen_principal}
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/30 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-3xl text-primary/30">image</span>
-                </div>
-              )}
+              <ImageWithFallback
+                src={noticia.imagen_principal}
+                alt={noticia.titulo}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                fallbackSrc="/placeholder-news.svg"
+              />
             </div>
             <h4 className="font-headline text-lg font-bold text-on-surface group-hover:text-primary transition-colors leading-snug line-clamp-2">
               {noticia.titulo}
