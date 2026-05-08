@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Audit Report - GaamaTV</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #334155; line-height: 1.6; padding: 2rem; max-width: 900px; mx-auto; margin: 0 auto; }
+    h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
+    .status-ok { color: #16a34a; font-weight: bold; }
+    .status-warning { color: #d97706; font-weight: bold; }
+    .status-critical { color: #dc2626; font-weight: bold; }
+    .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem; }
+    .metric { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; }
+    .metric:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .metric strong { display: inline-block; width: 250px; }
+    .risk-banner { background: #fef3c7; color: #92400e; padding: 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: bold; text-align: center; margin: 1.5rem 0; border: 1px solid #fcd34d; }
+  </style>
+</head>
+<body>
+
+  <h1>🛡️ SECURITY AUDIT REPORT</h1>
+  <div class="risk-banner">
+    RIESGO TOTAL: MEDIO 🟠 | DEPLOY RECOMENDADO: SÍ
+  </div>
+
+  <div class="card">
+    <h2>Resumen de Auditoría</h2>
+    
+    <div class="metric">
+      <strong>🔐 Credenciales:</strong> 
+      <span class="status-ok">[OK]</span> No se encontraron credenciales hardcodeadas. Se utilizan variables de entorno de Supabase adecuadamente.
+    </div>
+    <div class="metric">
+      <strong>🔐 Base de Datos Firebase:</strong> 
+      <span class="status-ok">[OK]</span> No aplica (El proyecto utiliza Supabase).
+    </div>
+    <div class="metric">
+      <strong>🔐 Base de Datos Supabase:</strong> 
+      <span class="status-warning">[MEDIO]</span> La creación de noticias depende de las políticas RLS. El panel de admin debe estar restringido a usuarios autorizados.
+    </div>
+    <div class="metric">
+      <strong>🔐 Arquitectura:</strong> 
+      <span class="status-ok">[OK]</span> Buena separación de componentes, server actions vs client components y SSR/SSG.
+    </div>
+    <div class="metric">
+      <strong>🔐 Autenticación / Autorización:</strong> 
+      <span class="status-warning">[MEDIO]</span> Se deben asegurar las rutas bajo `/admin` a través de controles efectivos (ej. middleware).
+    </div>
+    <div class="metric">
+      <strong>🔐 APIs / Functions:</strong> 
+      <span class="status-ok">[OK]</span> Las interacciones en `lib/supabase.js` están construidas correctamente usando el SDK de manera segura.
+    </div>
+    <div class="metric">
+      <strong>🔐 Dependencias:</strong> 
+      <span class="status-ok">[OK]</span> No se detectó código externo vulnerable.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🧩 DETALLES DE CORRECCIONES</h2>
+    
+    <div class="metric">
+      <h3>Archivo: <code>app/noticia/[slug]/page.js</code></h3>
+      <p><strong>Descripción del problema:</strong> Se detectó una deconstrucción incorrecta del retorno de la función <code>getNoticiasRelacionadas</code>. Como retornaba un array directo, la variable resultaba <code>undefined</code>, provocando que no se muestre toda la noticia (desaparecía la sección de noticias relacionadas) y causando comportamientos impredecibles interpretados como error 500 durante la navegación.</p>
+      <p><strong>Nivel de riesgo:</strong> <span class="status-warning">🟠 MEDIO</span></p>
+      <p><strong>Recomendación:</strong> El código fue corregido exitosamente. Se aconseja mantener los null checks preventivos para el renderizado.</p>
+    </div>
+
+    <div class="metric">
+      <h3>Archivo: <code>app/admin/noticias/nueva/page.js</code></h3>
+      <p><strong>Descripción del problema:</strong> Se auditó la lógica de asignación de <code>categoria_id</code> y su validación (especialmente la de <code>slug</code> y <code>fecha_publicacion</code>) al crear noticias en categorías nuevas o existentes.</p>
+      <p><strong>Nivel de riesgo:</strong> <span class="status-ok">🟢 BAJO</span></p>
+      <p><strong>Recomendación:</strong> La función <code>handleCrearCategoria</code> y <code>handleSubmit</code> manejan de forma segura y consistente la creación de datos, preservando los tipos soportados por la BD.</p>
+    </div>
+  </div>
+
+</body>
+</html>

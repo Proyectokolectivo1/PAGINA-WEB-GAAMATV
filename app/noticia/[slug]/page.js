@@ -43,7 +43,7 @@ export default async function NoticiaPage({ params }) {
     notFound()
   }
 
-  const { data: relacionadas } = await getNoticiasRelacionadas(noticia.id, noticia.categoria_id, 3)
+  const relacionadas = await getNoticiasRelacionadas(noticia.id, noticia.categoria_id, 3)
 
   const youtubeId = extractYouTubeId(noticia.video_youtube_id)
 
