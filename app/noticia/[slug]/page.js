@@ -1,5 +1,5 @@
 import { getNoticiaBySlug, getNoticiasRelacionadas, getNoticias, getCategorias } from '@/lib/supabase'
-import { extractYouTubeId, getYouTubeThumbnail } from '@/lib/supabase'
+import { extractYouTubeId } from '@/lib/supabase'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import ViewTracker from '@/app/components/ViewTracker'
@@ -11,9 +11,11 @@ export const revalidate = 30
 export async function generateStaticParams() {
   try {
     const { data: noticias } = await getNoticias({ limit: 50 })
-    return noticias?.map((noticia) => ({
-      slug: noticia.slug,
-    })) || []
+    return noticias
+      ?.filter((noticia) => noticia.slug && noticia.slug.length <= 150)
+      .map((noticia) => ({
+        slug: noticia.slug,
+      })) || []
   } catch (error) {
     return []
   }
