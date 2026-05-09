@@ -166,11 +166,14 @@ function RelatedNews({ noticias }) {
         Relacionados
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {noticias.map((noticia) => (
+        {noticias.map((noticia) => {
+          const ytId = extractYouTubeId(noticia.video_youtube_id);
+          const imageSrc = noticia.imagen_principal || (ytId ? `https://img.youtube.com/vi/${ytId}/maxresdefault.jpg` : null);
+          return (
           <Link key={noticia.id} href={`/noticia/${noticia.slug}`} className="group cursor-pointer">
             <div className="aspect-video mb-3 rounded-lg overflow-hidden bg-surface-container-low transition-all group-hover:shadow-md">
               <ImageWithFallback
-                src={noticia.imagen_principal}
+                src={imageSrc}
                 alt={noticia.titulo}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 fallbackSrc="/placeholder-news.svg"
@@ -183,7 +186,8 @@ function RelatedNews({ noticias }) {
               {noticia.categoria?.nombre}
             </p>
           </Link>
-        ))}
+          );
+        })}
       </div>
     </section>
   )
