@@ -2,23 +2,6 @@
 
 import { useState, useEffect } from 'react'
 
-function getDirectImageUrl(url) {
-  if (!url) return url;
-  try {
-    // Google Drive format: /file/d/ID/...
-    const driveMatch1 = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-    if (driveMatch1) return `https://drive.google.com/uc?export=view&id=${driveMatch1[1]}`;
-
-    // Google Drive format: ?id=ID
-    const driveMatch2 = url.match(/drive\.google\.com\/(?:open|uc)\?.*id=([a-zA-Z0-9_-]+)/);
-    if (driveMatch2) return `https://drive.google.com/uc?export=view&id=${driveMatch2[1]}`;
-
-    // Note: Terabox links cannot be converted to direct images because they block hotlinking.
-    return url;
-  } catch (e) {
-    return url;
-  }
-}
 export default function ImageWithFallback({ 
   src, 
   alt, 
@@ -26,11 +9,25 @@ export default function ImageWithFallback({
   fallbackSrc = '/placeholder-news.svg',
   ...props 
 }) {
-  const [imgSrc, setImgSrc] = useState(getDirectImageUrl(src) || fallbackSrc)
+  // Utility to convert Google Drive viewer links to direct image links
+  const processUrl = (url) => {
+    if (!url) return fallbackSrc;
+    if (typeof url !== 'string') return url;
+    
+    if (url.includes('drive.google.com/file/d/')) {
+      const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+      }
+    }
+    return url;
+  };
+
+  const [imgSrc, setImgSrc] = useState(() => processUrl(src))
 
   useEffect(() => {
-    setImgSrc(getDirectImageUrl(src) || fallbackSrc)
-  }, [src, fallbackSrc])
+    setImgSrc(processUrl(src))
+  }, [src])
 
   const handleError = () => {
     if (imgSrc !== fallbackSrc) {
