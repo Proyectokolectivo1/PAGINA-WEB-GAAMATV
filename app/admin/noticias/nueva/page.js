@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getCategorias, getAutores, createNoticia, createCategoria, generateSlug, extractYouTubeId } from '@/lib/supabase'
+import { getCategorias, getAutores, createNoticia, createCategoria, generateSlug, extractYouTubeId, processImageUrl } from '@/lib/supabase'
+import { revalidateNewsCache } from '@/app/actions'
 
 export default function NuevaNoticia() {
   const router = useRouter()
@@ -53,9 +54,16 @@ export default function NuevaNoticia() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
+    let processedValue = type === 'checkbox' ? checked : value
+    
+    // Automatically process image URL if it's a Drive link
+    if (name === 'imagen_principal' && typeof processedValue === 'string') {
+      processedValue = processImageUrl(processedValue)
+    }
+
     setForm(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: processedValue
     }))
   }
 
@@ -150,6 +158,7 @@ export default function NuevaNoticia() {
       }
 
       const nuevaNoticia = await createNoticia(noticiaData)
+      await revalidateNewsCache()
       
       // Force navigation to admin list
       setTimeout(() => {

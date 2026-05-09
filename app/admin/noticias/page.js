@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getNoticiasAdmin, deleteNoticia, togglePublicarNoticia } from '@/lib/supabase'
+import { revalidateNewsCache } from '@/app/actions'
 
 export default function AdminNoticias() {
   const [noticias, setNoticias] = useState([])
@@ -31,6 +32,7 @@ export default function AdminNoticias() {
     
     try {
       await deleteNoticia(id)
+      await revalidateNewsCache()
       loadNoticias()
     } catch (error) {
       alert('Error al eliminar la noticia')
@@ -40,6 +42,7 @@ export default function AdminNoticias() {
   const handleTogglePublicar = async (id, currentStatus) => {
     try {
       await togglePublicarNoticia(id, !currentStatus)
+      await revalidateNewsCache()
       loadNoticias()
     } catch (error) {
       alert('Error al cambiar el estado')

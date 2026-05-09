@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { getCategoriasAdmin, updateCategoria, createCategoria, deleteCategoria } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
+import { revalidateNewsCache } from '@/app/actions'
 
 export default function CategoriasAdmin() {
   const [categorias, setCategorias] = useState([])
@@ -89,6 +90,7 @@ export default function CategoriasAdmin() {
       } else {
         await createCategoria(formData)
       }
+      await revalidateNewsCache()
       fetchCategorias()
       handleCloseModal()
       // Force refresh on the main page to update navbar
@@ -103,6 +105,7 @@ export default function CategoriasAdmin() {
     if (confirm('¿Estás seguro de que deseas eliminar esta categoría? Si tiene noticias asociadas, la operación fallará por integridad de datos.')) {
       try {
         await deleteCategoria(id)
+        await revalidateNewsCache()
         fetchCategorias()
         // Force refresh on the main page to update navbar
         router.refresh()
