@@ -54,16 +54,9 @@ export default function NuevaNoticia() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
-    let processedValue = type === 'checkbox' ? checked : value
-    
-    // Automatically process image URL if it's a Drive link
-    if (name === 'imagen_principal' && typeof processedValue === 'string') {
-      processedValue = processImageUrl(processedValue)
-    }
-
     setForm(prev => ({
       ...prev,
-      [name]: processedValue
+      [name]: type === 'checkbox' ? checked : value
     }))
   }
 
@@ -448,7 +441,7 @@ export default function NuevaNoticia() {
                 />
                 {form.imagen_principal && (
                   <div className="mt-4 rounded-xl overflow-hidden border border-stone-200 bg-stone-50 p-1 relative group">
-                    <img src={form.imagen_principal} alt="Preview" className="w-full h-40 object-cover rounded-lg" onError={(e) => { e.target.style.display = 'none' }} />
+                    <img src={processImageUrl(form.imagen_principal)} alt="Preview" className="w-full h-40 object-cover rounded-lg" onError={(e) => { e.target.style.display = 'none' }} />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
                       <button
                         type="button"
