@@ -5,9 +5,32 @@ import Footer from './components/Footer'
 import LiveIndicator from './components/LiveIndicator'
 
 export const metadata = {
-  title: 'GaamaTV | El Lens Editorial del Oriente Antioqueño',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://gaamatv.vercel.app'),
+  title: {
+    default: 'GaamaTV | El Lens Editorial del Oriente Antioqueño',
+    template: '%s | GaamaTV',
+  },
   description: 'Tu fuente de noticias del Oriente Antioqueño. Información local, regional y nacional.',
+  openGraph: {
+    siteName: 'GaamaTV',
+    locale: 'es_CO',
+    type: 'website',
+    images: [
+      {
+        url: '/api/og-image/default',
+        width: 1200,
+        height: 630,
+        alt: 'GaamaTV — El lente editorial del Oriente Antioqueño',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@GaamaTV',
+    images: ['/api/og-image/default'],
+  },
 }
+
 
 export default function RootLayout({ children }) {
   return (

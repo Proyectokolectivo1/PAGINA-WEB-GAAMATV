@@ -1,5 +1,4 @@
-import { getNoticiaBySlug, getNoticiasRelacionadas, getNoticias, getCategorias } from '@/lib/supabase'
-import { extractYouTubeId } from '@/lib/supabase'
+import { getNoticiaBySlug, getNoticiasRelacionadas, getNoticias, getCategorias, extractYouTubeId, getOgImageUrl } from '@/lib/supabase'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import ViewTracker from '@/app/components/ViewTracker'
@@ -25,13 +24,68 @@ export async function generateMetadata({ params }) {
   try {
     const { slug } = await params
     const noticia = await getNoticiaBySlug(slug)
+
+    // URL base del sitio (en producción viene de NEXT_PUBLIC_SITE_URL)
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://gaamaproducciones.com'
+    const canonicalUrl = `${siteUrl}/noticia/${noticia.slug}`
+
+    // Descripción limpia: excerpt o primeros 160 chars del contenido (sin HTML ni saltos de línea)
+    const rawDescription = noticia.excerpt || noticia.contenido || ''
+    const cleanDescription = rawDescription
+      .replace(/<[^>]*>/g, '')   // quitar HTML si lo hay
+      .replace(/\s+/g, ' ')      // colapsar saltos de línea y espacios múltiples
+      .trim()
+      .substring(0, 157)          // dejar espacio para '...'
+    const description = cleanDescription
+      ? (cleanDescription.length >= 157 ? cleanDescription + '...' : cleanDescription)
+      : 'Noticias del Oriente Antioqueño en GaamaTV — El lente editorial de la región.'
+
+    // Imagen OG: imagen principal (con proxy si es Google Drive) o thumbnail de YouTube
+    const ogImage = getOgImageUrl(
+      noticia.imagen_principal,
+      noticia.video_youtube_id,
+      siteUrl
+    ) || `${siteUrl}/api/og-image/default`
+
     return {
       title: `${noticia.titulo} | GaamaTV`,
-      description: noticia.excerpt || noticia.contenido?.substring(0, 160),
+      description,
+      alternates: {
+        canonical: canonicalUrl,
+      },
+      openGraph: {
+        title: noticia.titulo,
+        description,
+        url: canonicalUrl,
+        siteName: 'GaamaTV',
+        locale: 'es_CO',
+        type: 'article',
+        publishedTime: noticia.fecha_publicacion,
+        modifiedTime: noticia.updated_at || noticia.fecha_publicacion,
+        authors: noticia.autor?.nombre ? [noticia.autor.nombre] : ['GaamaTV'],
+        section: noticia.categoria?.nombre || 'Noticias',
+        images: [
+          {
+            url: ogImage,
+            width: 1200,
+            height: 630,
+            alt: noticia.titulo,
+            type: 'image/jpeg',
+          },
+        ],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: noticia.titulo,
+        description,
+        images: [ogImage],
+        site: '@GaamaTV',
+      },
     }
   } catch {
     return {
       title: 'Noticia no encontrada | GaamaTV',
+      description: 'GaamaTV — El Lens Editorial del Oriente Antioqueño.',
     }
   }
 }
