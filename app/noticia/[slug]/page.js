@@ -6,6 +6,7 @@ import ShareButtons from '@/app/components/ShareButtons'
 import ImageWithFallback from '@/app/components/ImageWithFallback'
 
 export const revalidate = 30
+export const dynamicParams = true
 
 export async function generateStaticParams() {
   try {

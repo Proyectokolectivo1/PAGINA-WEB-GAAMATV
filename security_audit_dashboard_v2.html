@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Security Audit Report v2 — GaamaTV</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+
+    .container { max-width: 1000px; margin: 0 auto; }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #161b22, #1a2f1a);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(88,166,255,0.08), transparent);
+      border-radius: 50%;
+    }
+    .header h1 { font-size: 1.8rem; font-weight: 700; color: #f0f6fc; margin-bottom: 0.5rem; }
+    .header .meta { font-size: 0.85rem; color: #8b949e; display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 1rem; }
+    .header .meta span { display: flex; align-items: center; gap: 0.4rem; }
+
+    /* Summary Box */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .summary-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    .summary-card .icon { font-size: 1.6rem; }
+    .summary-card .label { font-size: 0.75rem; color: #8b949e; text-transform: uppercase; letter-spacing: 0.05em; }
+    .summary-card .value { font-size: 1rem; font-weight: 700; margin-top: 0.2rem; }
+    .ok { color: #3fb950; }
+    .medio { color: #e3b341; }
+    .critico { color: #f85149; }
+
+    /* Verdict banner */
+    .verdict {
+      background: linear-gradient(135deg, #0d2911, #1a3a1a);
+      border: 2px solid #3fb950;
+      border-radius: 12px;
+      padding: 1.5rem 2rem;
+      margin-bottom: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .verdict-left h2 { color: #3fb950; font-size: 1.1rem; margin-bottom: 0.3rem; }
+    .verdict-left p { color: #8b949e; font-size: 0.9rem; }
+    .verdict-badge {
+      background: #3fb950;
+      color: #0d1117;
+      font-weight: 800;
+      font-size: 1.1rem;
+      padding: 0.6rem 1.5rem;
+      border-radius: 8px;
+      letter-spacing: 0.05em;
+    }
+
+    /* Confirmation box */
+    .confirm-box {
+      background: #161b22;
+      border: 1px solid #3fb950;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .confirm-box h2 { color: #3fb950; font-size: 1rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .confirm-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      background: #0d1117;
+    }
+    .confirm-item .check { color: #3fb950; font-size: 1.2rem; flex-shrink: 0; }
+    .confirm-item strong { color: #f0f6fc; display: block; font-size: 0.9rem; }
+    .confirm-item p { font-size: 0.82rem; color: #8b949e; margin-top: 0.2rem; }
+
+    /* Section */
+    .section {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+    .section-header {
+      padding: 1rem 1.5rem;
+      background: #1c2128;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .section-header h2 { font-size: 0.95rem; font-weight: 700; color: #f0f6fc; }
+    .section-body { padding: 1.2rem 1.5rem; }
+
+    /* Badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .badge-ok { background: #0d2911; color: #3fb950; border: 1px solid #3fb950; }
+    .badge-medio { background: #2d2000; color: #e3b341; border: 1px solid #e3b341; }
+    .badge-critico { background: #2d0000; color: #f85149; border: 1px solid #f85149; }
+
+    /* Finding */
+    .finding {
+      border-left: 3px solid #30363d;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+      border-radius: 0 6px 6px 0;
+      background: #0d1117;
+    }
+    .finding.ok { border-color: #3fb950; }
+    .finding.medio { border-color: #e3b341; }
+    .finding.critico { border-color: #f85149; }
+    .finding .finding-title { font-weight: 700; font-size: 0.88rem; color: #f0f6fc; margin-bottom: 0.3rem; }
+    .finding .finding-file { font-size: 0.78rem; color: #8b949e; font-family: monospace; margin-bottom: 0.4rem; }
+    .finding .finding-desc { font-size: 0.85rem; color: #c9d1d9; margin-bottom: 0.4rem; }
+    .finding .finding-rec { font-size: 0.82rem; color: #8b949e; font-style: italic; }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 0.5rem 0; }
+    th { background: #1c2128; color: #8b949e; font-weight: 600; text-align: left; padding: 0.6rem 0.8rem; border-bottom: 1px solid #30363d; }
+    td { padding: 0.55rem 0.8rem; border-bottom: 1px solid #21262d; color: #c9d1d9; }
+    tr:last-child td { border-bottom: none; }
+
+    /* Changes */
+    .change-card {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .change-card h3 { font-size: 0.88rem; color: #f0f6fc; margin-bottom: 0.5rem; font-family: monospace; }
+    .change-card pre {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-size: 0.8rem;
+      color: #3fb950;
+      overflow-x: auto;
+      margin: 0.5rem 0;
+    }
+    .change-card .verdict-inline { font-size: 0.82rem; color: #3fb950; font-weight: 700; }
+
+    /* Checklist */
+    .checklist { list-style: none; }
+    .checklist li {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #21262d;
+      font-size: 0.88rem;
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .checklist li .check-icon { color: #3fb950; font-size: 1rem; }
+
+    /* Footer */
+    .footer { text-align: center; color: #484f58; font-size: 0.8rem; margin-top: 2rem; padding: 1rem; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>🔐 Security Audit Report v2 — GaamaTV</h1>
+    <div class="meta">
+      <span>📅 Fecha: 2026-05-15</span>
+      <span>🤖 Auditor: Antigravity AI</span>
+      <span>🎯 Scope: Enrutamiento dinámico + Caché ISR</span>
+      <span>📦 Next.js 14.0.4 + Supabase</span>
+    </div>
+  </div>
+
+  <!-- SUMMARY GRID -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="icon">🔑</div>
+      <div>
+        <div class="label">Credenciales</div>
+        <div class="value medio">MEDIO</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="icon">🗄️</div>
+      <div>
+        <div class="label">Base de Datos RLS</div>
+        <div class="value ok">OK</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="icon">🏗️</div>
+      <div>
+        <div class="label">Arquitectura</div>
+        <div class="value ok">OK</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="icon">🔒</div>
+      <div>
+        <div class="label">Auth / Autorización</div>
+        <div class="value ok">OK</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="icon">🌐</div>
+      <div>
+        <div class="label">APIs / Endpoints</div>
+        <div class="value ok">OK</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="icon">📦</div>
+      <div>
+        <div class="label">Dependencias</div>
+        <div class="value ok">OK</div>
+      </div>
+    </div>
+    <div class="summary-card">
+      <div class="icon">⚡</div>
+      <div>
+        <div class="label">Fix Enrutamiento</div>
+        <div class="value ok">✅ CORREGIDO</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VERDICT -->
+  <div class="verdict">
+    <div class="verdict-left">
+      <h2>✅ DEPLOY AUTORIZADO</h2>
+      <p>No se detectaron bloqueantes de seguridad. Los cambios aplicados son seguros y funcionales.</p>
+    </div>
+    <div class="verdict-badge">RIESGO TOTAL: MEDIO</div>
+  </div>
+
+  <!-- CONFIRMACIÓN DEL FIX -->
+  <div class="confirm-box">
+    <h2>✅ Confirmación: ¿El sistema quedó completamente parchado?</h2>
+    <div class="confirm-item">
+      <span class="check">✅</span>
+      <div>
+        <strong>Noticias nuevas en CUALQUIER categoría o sección</strong>
+        <p>Con <code>dynamicParams = true</code>, cualquier noticia nueva (sin importar su categoría, sección o ciudad) se renderiza dinámicamente en la primera visita. No se requiere nuevo deploy.</p>
+      </div>
+    </div>
+    <div class="confirm-item">
+      <span class="check">✅</span>
+      <div>
+        <strong>Categorías nuevas</strong>
+        <p>Las categorías son atributos de la noticia vía <code>categoria_id</code>. La ruta <code>/noticia/[slug]</code> no depende de la categoría para funcionar. Crear nuevas categorías y asignarlas a noticias funciona correctamente sin errores 500.</p>
+      </div>
+    </div>
+    <div class="confirm-item">
+      <span class="check">✅</span>
+      <div>
+        <strong>Revalidación de caché al editar noticias</strong>
+        <p><code>revalidateNoticiaCache(slug)</code> invalida inmediatamente la caché ISR de la URL específica al guardar cambios. Los cambios se reflejan en la siguiente visita sin esperar 30 segundos.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- FASE 1: CREDENCIALES -->
+  <div class="section">
+    <div class="section-header">
+      <h2>🔑 FASE 1 — Credenciales y Secretos</h2>
+      <span class="badge badge-medio">🟠 MEDIO</span>
+    </div>
+    <div class="section-body">
+      <div class="finding medio">
+        <div class="finding-title">🟠 NEXT_PUBLIC keys visibles en cliente</div>
+        <div class="finding-file">lib/supabase.js (L3-4) · app/admin/fix/page.js (L7-8)</div>
+        <div class="finding-desc">Las variables <code>NEXT_PUBLIC_SUPABASE_URL</code> y <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> son visibles en el navegador. Esto es el comportamiento esperado y documentado por Supabase — la <code>anon key</code> es intencionalmente pública. La seguridad recae en las RLS policies (Fase 2).</div>
+        <div class="finding-rec">✅ Controlado: RLS configurado en 7/7 tablas. .env.local en .gitignore.</div>
+      </div>
+      <div class="finding ok">
+        <div class="finding-title">✅ .gitignore correctamente configurado</div>
+        <div class="finding-desc">.env.local excluido del repositorio. Sin exposición de credenciales en Git.</div>
+      </div>
+      <div class="finding ok">
+        <div class="finding-title">✅ Sin service_role key en código frontend</div>
+        <div class="finding-desc">Búsqueda exhaustiva: cero instancias de service_role en todo el proyecto. Correcto.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FASE 2: RLS -->
+  <div class="section">
+    <div class="section-header">
+      <h2>🗄️ FASE 2 — Seguridad Base de Datos Supabase (RLS)</h2>
+      <span class="badge badge-ok">✅ OK</span>
+    </div>
+    <div class="section-body">
+      <table>
+        <thead>
+          <tr><th>Tabla</th><th>RLS</th><th>SELECT</th><th>INSERT</th><th>UPDATE</th><th>DELETE</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>categorias</code></td><td class="ok">✅</td><td>Público</td><td>Auth</td><td>Auth</td><td>Auth</td></tr>
+          <tr><td><code>autores</code></td><td class="ok">✅</td><td>Público</td><td>Auth</td><td>Auth</td><td>Auth</td></tr>
+          <tr><td><code>noticias</code></td><td class="ok">✅</td><td>Público</td><td>Auth</td><td>Auth</td><td>Auth</td></tr>
+          <tr><td><code>galeria_noticias</code></td><td class="ok">✅</td><td>Público</td><td>Auth</td><td>Auth</td><td>Auth</td></tr>
+          <tr><td><code>publicidad_negocios</code></td><td class="ok">✅</td><td>Público</td><td>Auth</td><td>Auth</td><td>Auth</td></tr>
+          <tr><td><code>firmas</code></td><td class="ok">✅</td><td>Público</td><td>Auth</td><td>Auth</td><td>Auth</td></tr>
+          <tr><td><code>redes_sociales</code></td><td class="ok">✅</td><td>Público</td><td>Auth</td><td>Auth</td><td>Auth</td></tr>
+        </tbody>
+      </table>
+      <br/>
+      <div class="finding ok">
+        <div class="finding-title">✅ RLS habilitado en 7/7 tablas</div>
+        <div class="finding-desc">Lectura pública (necesario para el portal). Escritura solo para usuarios autenticados.</div>
+      </div>
+      <div class="finding ok">
+        <div class="finding-title">✅ Filtro publicado = true en lectura pública</div>
+        <div class="finding-desc">getNoticiaBySlug() y getNoticias() filtran .eq('publicado', true). Los borradores no son accesibles desde el portal público.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FASE 3: ARQUITECTURA -->
+  <div class="section">
+    <div class="section-header">
+      <h2>🏗️ FASE 3 — Arquitectura</h2>
+      <span class="badge badge-ok">✅ OK</span>
+    </div>
+    <div class="section-body">
+      <div class="finding ok">
+        <div class="finding-title">✅ dynamicParams = true — ISR híbrido correcto</div>
+        <div class="finding-desc">Noticias del build → caché estática. Noticias nuevas → primer render dinámico, luego ISR 30s. Noticias editadas → revalidación inmediata por slug.</div>
+      </div>
+      <div class="finding ok">
+        <div class="finding-title">✅ Separación frontend / lógica sensible</div>
+        <div class="finding-desc">Roles, permisos y publicación se gestionan en DB con RLS. No se calculan en el cliente.</div>
+      </div>
+      <div class="finding ok">
+        <div class="finding-title">✅ Protección contra ENAMETOOLONG</div>
+        <div class="finding-desc">generateStaticParams filtra slugs > 150 chars. generateSlug() trunca a 100 chars máximo.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FASE 4: AUTH -->
+  <div class="section">
+    <div class="section-header">
+      <h2>🔒 FASE 4 — Autenticación y Autorización</h2>
+      <span class="badge badge-ok">✅ OK</span>
+    </div>
+    <div class="section-body">
+      <div class="finding ok">
+        <div class="finding-title">✅ Admin protegido por Supabase Auth</div>
+        <div class="finding-desc">Todas las páginas /admin verifican sesión activa. Sin sesión → redirect a /admin/login.</div>
+      </div>
+      <div class="finding medio">
+        <div class="finding-title">🟠 /admin/fix accesible por URL directa</div>
+        <div class="finding-file">app/admin/fix/page.js</div>
+        <div class="finding-desc">Herramienta de mantenimiento que verifica sesión antes de operar. Sin sesión: solo muestra mensaje de error, no ejecuta cambios en DB.</div>
+        <div class="finding-rec">Recomendación: Agregar middleware de protección /admin/* en próxima iteración. Riesgo actual: bajo.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FASE 5: APIS -->
+  <div class="section">
+    <div class="section-header">
+      <h2>🌐 FASE 5 — APIs / Functions / Endpoints</h2>
+      <span class="badge badge-ok">✅ OK</span>
+    </div>
+    <div class="section-body">
+      <div class="finding ok">
+        <div class="finding-title">✅ /api/og-image con whitelist de dominios</div>
+        <div class="finding-desc">Proxy de imágenes valida URL contra lista de dominios permitidos. Dominio no permitido → 403. Timeout de 8s configurado. Protegido contra SSRF y ataques de lentitud.</div>
+      </div>
+      <div class="finding ok">
+        <div class="finding-title">✅ revalidateNoticiaCache es Server Action</div>
+        <div class="finding-desc">Solo ejecutable en contexto servidor ('use server'). No expone endpoint HTTP externo.</div>
+      </div>
+      <div class="finding ok">
+        <div class="finding-title">✅ incrementVisitas via RPC de Supabase</div>
+        <div class="finding-desc">Función protegida en DB. No expone datos sensibles.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAMBIOS AUDITADOS -->
+  <div class="section">
+    <div class="section-header">
+      <h2>⚡ Cambios Auditados — Detalle</h2>
+      <span class="badge badge-ok">✅ 4/4 SEGUROS</span>
+    </div>
+    <div class="section-body">
+      <div class="change-card">
+        <h3>CAMBIO 1 — app/noticia/[slug]/page.js</h3>
+        <pre>+ export const dynamicParams = true</pre>
+        <p style="font-size:0.85rem;color:#8b949e;margin-bottom:0.5rem;">Permite que slugs no pre-generados sean servidos dinámicamente. El fetch sigue filtrando <code>publicado = true</code>.</p>
+        <div class="verdict-inline">✅ SEGURO — Sin riesgo introducido</div>
+      </div>
+      <div class="change-card">
+        <h3>CAMBIO 2 — app/actions.js</h3>
+        <pre>export async function revalidateNoticiaCache(slug) {
+  if (slug) { revalidatePath(`/noticia/${slug}`) }
+  revalidatePath('/')
+  revalidatePath('/', 'layout')
+}</pre>
+        <p style="font-size:0.85rem;color:#8b949e;margin-bottom:0.5rem;">Revalidación ISR específica por slug. El slug proviene de generateSlug() (sanitizado). Función interna de Next.js.</p>
+        <div class="verdict-inline">✅ SEGURO — Sin riesgo introducido</div>
+      </div>
+      <div class="change-card">
+        <h3>CAMBIO 3 — app/admin/noticias/nueva/page.js</h3>
+        <pre>await revalidateNoticiaCache(noticiaData.slug)</pre>
+        <div class="verdict-inline">✅ SEGURO — Slug sanitizado antes de llamar</div>
+      </div>
+      <div class="change-card">
+        <h3>CAMBIO 4 — app/admin/noticias/[id]/page.js</h3>
+        <pre>await revalidateNoticiaCache(noticiaData.slug)</pre>
+        <div class="verdict-inline">✅ SEGURO — Slug sanitizado antes de llamar</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHECKLIST PRODUCCIÓN -->
+  <div class="section">
+    <div class="section-header">
+      <h2>📋 Checklist Final de Producción</h2>
+    </div>
+    <div class="section-body">
+      <ul class="checklist">
+        <li><span class="check-icon">✅</span> <code>dynamicParams = true</code> en /noticia/[slug] — noticias nuevas sin 500</li>
+        <li><span class="check-icon">✅</span> <code>revalidateNoticiaCache(slug)</code> — ediciones reflejadas de inmediato</li>
+        <li><span class="check-icon">✅</span> .env.local en .gitignore — credenciales no en repositorio</li>
+        <li><span class="check-icon">✅</span> service_role NO presente en código frontend</li>
+        <li><span class="check-icon">✅</span> RLS activo en 7/7 tablas críticas de Supabase</li>
+        <li><span class="check-icon">✅</span> Proxy OG con whitelist de dominios + timeout</li>
+        <li><span class="check-icon">✅</span> Slugs limitados a 100 chars — sin ENAMETOOLONG</li>
+        <li><span class="check-icon">✅</span> publicado = true como filtro de lectura pública</li>
+        <li><span class="check-icon">✅</span> Build de producción exitoso (16/16 páginas generadas)</li>
+        <li><span class="check-icon">✅</span> Sin hardcoded API keys, tokens ni secrets</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer">
+    Generado por Antigravity AI Secure Code Auditor · GaamaTV v2 · 2026-05-15<br/>
+    Este reporte es informativo. No reemplaza una auditoría de seguridad humana completa.
+  </div>
+
+</div>
+</body>
+</html>

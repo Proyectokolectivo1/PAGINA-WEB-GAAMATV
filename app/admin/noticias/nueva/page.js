@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getCategorias, getAutores, createNoticia, createCategoria, generateSlug, extractYouTubeId, processImageUrl } from '@/lib/supabase'
-import { revalidateNewsCache } from '@/app/actions'
+import { revalidateNoticiaCache } from '@/app/actions'
 
 export default function NuevaNoticia() {
   const router = useRouter()
@@ -151,7 +151,7 @@ export default function NuevaNoticia() {
       }
 
       const nuevaNoticia = await createNoticia(noticiaData)
-      await revalidateNewsCache()
+      await revalidateNoticiaCache(noticiaData.slug)
       
       // Force navigation to admin list
       setTimeout(() => {
