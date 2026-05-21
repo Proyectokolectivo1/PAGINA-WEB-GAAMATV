@@ -34,6 +34,13 @@ export async function generateMetadata({ params }) {
     const { slug } = await params
     const noticia = await getNoticiaCached(slug)
 
+    if (!noticia) {
+      return {
+        title: 'Noticia no encontrada | GaamaTV',
+        description: 'GaamaTV — El Lens Editorial del Oriente Antioqueño.',
+      }
+    }
+
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://gaamaproducciones.com'
     const canonicalUrl = `${siteUrl}/noticia/${noticia.slug}`
 
@@ -95,15 +102,11 @@ export async function generateMetadata({ params }) {
 export default async function NoticiaPage({ params }) {
   const { slug } = await params
 
-  // Fetch de la noticia — notFound() si no existe
-  let noticia
-  try {
-    noticia = await getNoticiaCached(slug)
-  } catch {
-    notFound()
-  }
+  // Fetch de la noticia — getNoticiaBySlug returns null when not found (never throws)
+  const noticia = await getNoticiaCached(slug)
 
-  if (!noticia) notFound()
+  // Not found or unpublished (public page only shows published content)
+  if (!noticia || !noticia.publicado) notFound()
 
   // Noticias relacionadas — NO lanzar 500 si falla (no-crítico)
   let relacionadas = []
@@ -122,6 +125,39 @@ export default async function NoticiaPage({ params }) {
       <RelatedNews noticias={relacionadas} />
     </>
   )
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Convierte el contenido almacenado en HTML listo para renderizar.
+ *
+ * El contenido en la base de datos se guarda como texto plano con saltos
+ * de línea simples (\n) separando cada párrafo/oración.
+ *
+ * Reglas:
+ *  1. Si el contenido ya contiene etiquetas HTML de bloque (<p>, <br>, <h1-6>,
+ *     <ul>, <ol>, <div>, etc.) se devuelve sin modificar.
+ *  2. Si es texto plano, cada línea no vacía se convierte en un <p>…</p>.
+ *     Esto cubre tanto el caso de \n simples como \n\n dobles.
+ */
+function formatContenido(contenido) {
+  if (!contenido) return ''
+
+  // Si ya contiene HTML de bloque, devolverlo intacto
+  const htmlBlockPattern = /<(p|br|h[1-6]|ul|ol|li|blockquote|div|hr|table|figure|img)\b/i
+  if (htmlBlockPattern.test(contenido)) {
+    return contenido
+  }
+
+  // Texto plano: cada línea no vacía → <p>…</p>
+  // Esto maneja correctamente tanto \n simples como \n\n dobles.
+  return contenido
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => `<p>${line}</p>`)
+    .join('')
 }
 
 // ─── Componentes internos ────────────────────────────────────────────────────
@@ -215,7 +251,7 @@ function ArticleContent({ noticia, youtubeId }) {
           <div
             className="text-lg leading-[1.8] font-body text-on-surface/90 [&>p]:mb-6 [&>p:first-of-type]:first-letter:text-6xl [&>p:first-of-type]:font-headline [&>p:first-of-type]:font-bold [&>p:first-of-type]:text-primary [&>p:first-of-type]:mr-3 [&>p:first-of-type]:float-left"
             dangerouslySetInnerHTML={{
-              __html: noticia.contenido?.replace(/\n/g, '</p><p>') || '',
+              __html: formatContenido(noticia.contenido),
             }}
           />
         </div>

@@ -2,28 +2,32 @@ SECURITY AUDIT REPORT
 
 🔐 Credenciales: OK
 🔐 Base de Datos Firebase: OK
-🔐 Base de Datos Supabase: OK (Políticas RLS mitigadas por registro privado)
-🔐 Arquitectura: MEDIO
-🔐 Autenticación / Autorización: OK (Registro público eliminado)
+🔐 Base de Datos Supabase: MEDIO
+🔐 Arquitectura: OK
+🔐 Autenticación / Autorización: MEDIO
 🔐 APIs / Functions: OK
 🔐 Dependencias: OK
 
-RIESGO TOTAL: BAJO
+RIESGO TOTAL: MEDIO
 DEPLOY RECOMENDADO: SÍ
 
 🧩 DETALLES:
-
-- Archivo / Componente: `app/admin/setup/page.js`
-- Descripción del problema: Vulnerabilidad CRÍTICA mitigada. Se ha eliminado por completo la ruta de registro público.
-- Nivel de riesgo: BAJO
-- Recomendación: Mantener la creación de usuarios administrativos exclusivamente a través del panel backend oficial de Supabase.
-
-- Archivo / Componente: `supabase-rls-secure.sql`
-- Descripción del problema: Las políticas `TO authenticated` ahora son seguras porque ya no existe una forma pública de que un usuario arbitrario consiga estar autenticado. Solamente los administradores creados manualmente tendrán acceso.
-- Nivel de riesgo: BAJO
-- Recomendación: Si a futuro se requiere un login para usuarios normales (no-admin), se deberá modificar las políticas RLS para verificar el rol del usuario, ya que de lo contrario cualquier usuario autenticado tendría permisos de administración.
-
-- Archivo / Componente: Componentes en `app/admin/...`
-- Descripción del problema: Toda la lógica de administración y actualización a la base de datos se maneja del lado del cliente (`use client`).
+- Archivo / Componente: `lib/supabase.js`
+- Descripción del problema: Las políticas RLS de Supabase actuales (`supabase-rls-secure.sql`) permiten la lectura pública incondicional (`USING (true)`) en la tabla `noticias`. Dado que `getNoticiaBySlug` ya no filtra del lado del SDK por `publicado = true` (para permitir que los flujos de administración obtengan la noticia completa independientemente de su estado), cualquiera con la API key de Supabase anónima (que es pública y está expuesta en el cliente) puede hacer una petición HTTP directa a la API de Supabase y descargar todos los borradores o noticias no publicadas.
 - Nivel de riesgo: MEDIO
-- Recomendación: A futuro, migrar operaciones sensibles y mutaciones de datos a Server Actions en Next.js.
+- Recomendación (NO aplicar cambios automáticamente): Actualizar la política RLS de SELECT en Supabase para la tabla `noticias` para restringir la visibilidad pública únicamente a los registros que estén publicados, a menos que el usuario esté autenticado.
+  Ejemplo de política segura:
+  `CREATE POLICY "select_public_noticias" ON noticias FOR SELECT TO public USING (publicado = true OR auth.role() = 'authenticated');`
+
+- Archivo / Componente: `app/noticia/[slug]/page.js` (Función `generateMetadata`)
+- Descripción del problema: La función `generateMetadata` de la página dinámica de noticias no valida si la noticia recuperada está publicada antes de generar las etiquetas meta de Open Graph (OG) y Twitter. Aunque la página en sí hace un renderizado condicional correcto y lanza un error 404 (`if (!noticia || !noticia.publicado) notFound()`), un cliente malintencionado o un web crawler podría descubrir la existencia, título, descripción e imagen de un borrador/noticia oculta solicitando directamente los metadatos de la cabecera HTML mediante el slug.
+- Nivel de riesgo: BAJO
+- Recomendación (NO aplicar cambios automáticamente): Actualizar la validación inicial de `generateMetadata` para tratar las noticias no publicadas de la misma manera que las no existentes:
+  ```js
+  if (!noticia || !noticia.publicado) {
+    return {
+      title: 'Noticia no encontrada | GaamaTV',
+      description: 'GaamaTV — El Lens Editorial del Oriente Antioqueño.',
+    }
+  }
+  ```

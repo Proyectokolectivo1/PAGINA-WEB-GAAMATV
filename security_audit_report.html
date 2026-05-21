@@ -3,76 +3,648 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Security Audit Report - GaamaTV</title>
+  <title>Dashboard de Auditoría de Seguridad — GaamaTV</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <!-- Material Symbols for elegant modern icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+  
   <style>
-    body { font-family: system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #334155; line-height: 1.6; padding: 2rem; max-width: 900px; mx-auto; margin: 0 auto; }
-    h1 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
-    .status-ok { color: #16a34a; font-weight: bold; }
-    .status-warning { color: #d97706; font-weight: bold; }
-    .status-critical { color: #dc2626; font-weight: bold; }
-    .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem; }
-    .metric { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #f1f5f9; }
-    .metric:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-    .metric strong { display: inline-block; width: 250px; }
-    .risk-banner { background: #fef3c7; color: #92400e; padding: 1rem; border-radius: 8px; font-size: 1.1rem; font-weight: bold; text-align: center; margin: 1.5rem 0; border: 1px solid #fcd34d; }
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: rgba(22, 30, 49, 0.7);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --color-ok: #10b981;
+      --color-ok-glow: rgba(16, 185, 129, 0.15);
+      --color-warn: #f59e0b;
+      --color-warn-glow: rgba(245, 158, 11, 0.15);
+      --color-critical: #ef4444;
+      --color-critical-glow: rgba(239, 68, 68, 0.15);
+      
+      --primary-glow: radial-gradient(circle at 50% -20%, rgba(59, 130, 246, 0.18), transparent 70%);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background-color: var(--bg-color);
+      background-image: var(--primary-glow);
+      background-attachment: fixed;
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 2rem 1.5rem;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    /* Elegant Header with Glowing Elements */
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+      position: relative;
+    }
+
+    .shield-icon {
+      font-size: 3.5rem;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 1rem;
+      display: inline-block;
+      filter: drop-shadow(0 0 15px rgba(139, 92, 246, 0.4));
+      animation: pulse 3s infinite ease-in-out;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      background: linear-gradient(to right, #f8fafc, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .meta-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .meta-subtitle span {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    /* Overall Risk Banner Card */
+    .risk-banner {
+      background: rgba(30, 41, 59, 0.4);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    @media (min-width: 768px) {
+      .risk-banner {
+        flex-direction: row;
+        padding: 2rem;
+      }
+    }
+
+    .risk-banner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--color-warn);
+      box-shadow: 0 0 10px var(--color-warn);
+    }
+
+    .risk-info h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+
+    .risk-info p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .risk-badges {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .risk-badge {
+      background: var(--color-warn-glow);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: var(--color-warn);
+      padding: 0.5rem 1.25rem;
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 0.875rem;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.1);
+    }
+
+    .deploy-badge {
+      background: var(--color-ok-glow);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: var(--color-ok);
+      padding: 0.5rem 1.25rem;
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 0.875rem;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+    }
+
+    /* Core Status Grid */
+    .status-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    @media (min-width: 640px) {
+      .status-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .status-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .status-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 1.25rem;
+      backdrop-filter: blur(8px);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .status-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .status-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .status-card-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .status-card-val {
+      font-size: 1.25rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .status-card-val.ok {
+      color: var(--color-ok);
+    }
+
+    .status-card-val.warn {
+      color: var(--color-warn);
+    }
+
+    .status-icon {
+      font-size: 1.35rem;
+    }
+
+    .status-card-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      line-height: 1.4;
+    }
+
+    /* Details Panel */
+    .details-section {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      backdrop-filter: blur(12px);
+      margin-bottom: 2.5rem;
+    }
+
+    @media (min-width: 768px) {
+      .details-section {
+        padding: 2.25rem;
+      }
+    }
+
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 0.75rem;
+    }
+
+    .section-title span {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Custom detailed report items */
+    .finding-item {
+      background: rgba(15, 23, 42, 0.3);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+      transition: border-color 0.2s;
+    }
+
+    .finding-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .finding-item:hover {
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+
+    .finding-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .finding-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #f1f5f9;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .finding-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .finding-badge.warn {
+      background: var(--color-warn-glow);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: var(--color-warn);
+    }
+
+    .finding-badge.info {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #60a5fa;
+    }
+
+    .finding-meta {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-family: monospace;
+      width: fit-content;
+    }
+
+    .finding-desc {
+      font-size: 0.95rem;
+      color: #cbd5e1;
+      margin-bottom: 1.25rem;
+      line-height: 1.6;
+    }
+
+    .finding-reco {
+      background: rgba(16, 185, 129, 0.04);
+      border: 1px dashed rgba(16, 185, 129, 0.2);
+      border-radius: 8px;
+      padding: 1.1rem;
+    }
+
+    .reco-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--color-ok);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .reco-content {
+      font-size: 0.9rem;
+      color: #a7f3d0;
+    }
+
+    .code-block {
+      background: #020617 !important;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.85rem;
+      color: #e2e8f0;
+      margin-top: 0.5rem;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    /* Fixed string raw report output (compliance with prompt) */
+    .raw-report-section {
+      background: #070a13;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 1.5rem;
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      line-height: 1.5;
+      margin-bottom: 2rem;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+    }
+
+    .raw-header {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    /* Animations */
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 15px rgba(139, 92, 246, 0.4));
+      }
+      50% {
+        transform: scale(1.04);
+        filter: drop-shadow(0 0 25px rgba(139, 92, 246, 0.6));
+      }
+    }
+
+    /* Footer styling */
+    footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4rem;
+      border-top: 1px solid var(--card-border);
+      padding-top: 1.5rem;
+    }
   </style>
 </head>
 <body>
 
-  <h1>🛡️ SECURITY AUDIT REPORT</h1>
-  <div class="risk-banner">
-    RIESGO TOTAL: MEDIO 🟠 | DEPLOY RECOMENDADO: SÍ
-  </div>
+  <div class="container">
+    <header>
+      <div class="material-symbols-outlined shield-icon">shield_with_heart</div>
+      <h1>GAAMATV SECURITY AUDIT DASHBOARD</h1>
+      <div class="meta-subtitle">
+        <span><i class="material-symbols-outlined" style="font-size:1rem;">calendar_month</i> 21 de Mayo, 2026</span>
+        <span><i class="material-symbols-outlined" style="font-size:1rem;">fingerprint</i> Auditor: Antigravity v3</span>
+        <span><i class="material-symbols-outlined" style="font-size:1rem;">published_with_changes</i> Estado: Pre-Deploy</span>
+      </div>
+    </header>
 
-  <div class="card">
-    <h2>Resumen de Auditoría</h2>
-    
-    <div class="metric">
-      <strong>🔐 Credenciales:</strong> 
-      <span class="status-ok">[OK]</span> No se encontraron credenciales hardcodeadas. Se utilizan variables de entorno de Supabase adecuadamente.
-    </div>
-    <div class="metric">
-      <strong>🔐 Base de Datos Firebase:</strong> 
-      <span class="status-ok">[OK]</span> No aplica (El proyecto utiliza Supabase).
-    </div>
-    <div class="metric">
-      <strong>🔐 Base de Datos Supabase:</strong> 
-      <span class="status-warning">[MEDIO]</span> La creación de noticias depende de las políticas RLS. El panel de admin debe estar restringido a usuarios autorizados.
-    </div>
-    <div class="metric">
-      <strong>🔐 Arquitectura:</strong> 
-      <span class="status-ok">[OK]</span> Buena separación de componentes, server actions vs client components y SSR/SSG.
-    </div>
-    <div class="metric">
-      <strong>🔐 Autenticación / Autorización:</strong> 
-      <span class="status-warning">[MEDIO]</span> Se deben asegurar las rutas bajo `/admin` a través de controles efectivos (ej. middleware).
-    </div>
-    <div class="metric">
-      <strong>🔐 APIs / Functions:</strong> 
-      <span class="status-ok">[OK]</span> Las interacciones en `lib/supabase.js` están construidas correctamente usando el SDK de manera segura.
-    </div>
-    <div class="metric">
-      <strong>🔐 Dependencias:</strong> 
-      <span class="status-ok">[OK]</span> No se detectó código externo vulnerable.
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>🧩 DETALLES DE CORRECCIONES</h2>
-    
-    <div class="metric">
-      <h3>Archivo: <code>app/noticia/[slug]/page.js</code></h3>
-      <p><strong>Descripción del problema:</strong> Se detectó una deconstrucción incorrecta del retorno de la función <code>getNoticiasRelacionadas</code>. Como retornaba un array directo, la variable resultaba <code>undefined</code>, provocando que no se muestre toda la noticia (desaparecía la sección de noticias relacionadas) y causando comportamientos impredecibles interpretados como error 500 durante la navegación.</p>
-      <p><strong>Nivel de riesgo:</strong> <span class="status-warning">🟠 MEDIO</span></p>
-      <p><strong>Recomendación:</strong> El código fue corregido exitosamente. Se aconseja mantener los null checks preventivos para el renderizado.</p>
+    <!-- Main Risk Overview Banner -->
+    <div class="risk-banner">
+      <div class="risk-info">
+        <h2>Reporte General de Vulnerabilidades</h2>
+        <p>Análisis exhaustivo del código de visualización de noticias y configuración de clientes.</p>
+      </div>
+      <div class="risk-badges">
+        <div class="risk-badge">
+          <span class="material-symbols-outlined" style="font-size: 1.1rem">warning</span>
+          RIESGO TOTAL: MEDIO
+        </div>
+        <div class="deploy-badge">
+          <span class="material-symbols-outlined" style="font-size: 1.1rem">check_circle</span>
+          DEPLOY: RECOMENDADO
+        </div>
+      </div>
     </div>
 
-    <div class="metric">
-      <h3>Archivo: <code>app/admin/noticias/nueva/page.js</code></h3>
-      <p><strong>Descripción del problema:</strong> Se auditó la lógica de asignación de <code>categoria_id</code> y su validación (especialmente la de <code>slug</code> y <code>fecha_publicacion</code>) al crear noticias en categorías nuevas o existentes.</p>
-      <p><strong>Nivel de riesgo:</strong> <span class="status-ok">🟢 BAJO</span></p>
-      <p><strong>Recomendación:</strong> La función <code>handleCrearCategoria</code> y <code>handleSubmit</code> manejan de forma segura y consistente la creación de datos, preservando los tipos soportados por la BD.</p>
+    <!-- Raw Console Output Block (Strict Format Compliance) -->
+    <div class="raw-header">
+      <span class="material-symbols-outlined" style="font-size: 1.15rem; color: #64748b">terminal</span>
+      REPORTE DE AUDITORÍA (FORMATO ESTÁNDAR)
     </div>
+    <div class="raw-report-section">SECURITY AUDIT REPORT
+
+🔐 Credenciales: OK
+🔐 Base de Datos Firebase: OK
+🔐 Base de Datos Supabase: MEDIO
+🔐 Arquitectura: OK
+🔐 Autenticación / Autorización: MEDIO
+🔐 APIs / Functions: OK
+🔐 Dependencias: OK
+
+RIESGO TOTAL: MEDIO
+DEPLOY RECOMENDADO: SÍ
+
+🧩 DETALLES:
+- Archivo / Componente: `lib/supabase.js`
+- Descripción del problema: Las políticas RLS de Supabase actuales (`supabase-rls-secure.sql`) permiten la lectura pública incondicional (`USING (true)`) en la tabla `noticias`. Dado que `getNoticiaBySlug` ya no filtra en el cliente por `publicado = true` para permitir que el administrador previsualice artículos antes del deploy, un tercero con la anon key puede consultar la API REST de Supabase directamente para leer borradores y noticias privadas.
+- Nivel de riesgo: MEDIO
+- Recomendación: Restringir la política SELECT en Supabase para noticias a: `publicado = true OR auth.role() = 'authenticated'`
+
+- Archivo / Componente: `app/noticia/[slug]/page.js`
+- Descripción del problema: La Server Action y metadatos `generateMetadata` devuelven información para noticias no publicadas. Un tercero podría descubrir metadatos de borradores.
+- Nivel de riesgo: BAJO
+- Recomendación: Implementar un guard check `if (!noticia || !noticia.publicado)` en `generateMetadata`.</div>
+
+    <!-- Executive Grid -->
+    <div class="status-grid">
+      <div class="status-card">
+        <div class="status-card-header">
+          <span class="status-card-title">Credenciales</span>
+          <span class="material-symbols-outlined status-icon" style="color: var(--color-ok)">lock</span>
+        </div>
+        <div>
+          <div class="status-card-val ok">OK</div>
+          <div class="status-card-desc">No hay API Keys ni secretos harcodeados. Uso correcto de variables .env.</div>
+        </div>
+      </div>
+
+      <div class="status-card">
+        <div class="status-card-header">
+          <span class="status-card-title">Firebase DB</span>
+          <span class="material-symbols-outlined status-icon" style="color: var(--color-ok)">cloud_done</span>
+        </div>
+        <div>
+          <div class="status-card-val ok">OK</div>
+          <div class="status-card-desc">No se utiliza en el proyecto (no aplica riesgo directo).</div>
+        </div>
+      </div>
+
+      <div class="status-card">
+        <div class="status-card-header">
+          <span class="status-card-title">Supabase DB</span>
+          <span class="material-symbols-outlined status-icon" style="color: var(--color-warn)">database</span>
+        </div>
+        <div>
+          <div class="status-card-val warn">MEDIO</div>
+          <div class="status-card-desc">Políticas SELECT permisivas permiten filtrado público libre en noticias.</div>
+        </div>
+      </div>
+
+      <div class="status-card">
+        <div class="status-card-header">
+          <span class="status-card-title">Arquitectura</span>
+          <span class="material-symbols-outlined status-icon" style="color: var(--color-ok)">layers</span>
+        </div>
+        <div>
+          <div class="status-card-val ok">OK</div>
+          <div class="status-card-desc">Estructura Next.js Server-Side correcta. Enrutamiento dinámico optimizado.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Finding List -->
+    <div class="details-section">
+      <div class="section-title">
+        <span class="material-symbols-outlined">analytics</span>
+        <span>Hallazgos Específicos & Mitigaciones</span>
+      </div>
+
+      <!-- Finding 1 -->
+      <div class="finding-item">
+        <div class="finding-header">
+          <div class="finding-title">
+            <span class="material-symbols-outlined" style="color: var(--color-warn)">warning</span>
+            Lectura Pública Incondicional de Borradores
+          </div>
+          <span class="finding-badge warn">Riesgo Medio</span>
+        </div>
+        <div class="finding-meta">
+          <span>Componente: lib/supabase.js | Tabla: noticias</span>
+        </div>
+        <div class="finding-desc">
+          Al remover el filtro de <code>publicado = true</code> en el cliente de base de datos para corregir errores de renderizado en el panel de administrador, toda la lógica de filtrado de noticias publicadas pasó al Frontend de Next.js en <code>app/noticia/[slug]/page.js</code>. Si bien esto soluciona el problema de visualización del administrador, la tabla <code>noticias</code> tiene una política RLS de SELECT configurada como <code>TO public USING (true)</code>. Esto permite que cualquier usuario descargue directamente borradores enviando queries HTTP REST directamente al endpoint de Supabase usando la clave anónima del frontend.
+        </div>
+        <div class="finding-reco">
+          <div class="reco-title">
+            <span class="material-symbols-outlined" style="font-size:1rem;">verified_user</span>
+            Mitigación Sugerida (Aplicar en Supabase SQL)
+          </div>
+          <div class="reco-content">
+            Actualizar la regla RLS para la tabla <code>noticias</code> de modo que la lectura pública solo se permita si el artículo ya está publicado, o si el solicitante es un usuario autenticado (administrador):
+            <div class="code-block">DROP POLICY IF EXISTS "select_public_noticias" ON noticias;
+CREATE POLICY "select_public_noticias" ON noticias 
+  FOR SELECT TO public 
+  USING (publicado = true OR auth.role() = 'authenticated');</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Finding 2 -->
+      <div class="finding-item">
+        <div class="finding-header">
+          <div class="finding-title">
+            <span class="material-symbols-outlined" style="color: #60a5fa">info</span>
+            Divulgación de Metadatos en Artículos Privados
+          </div>
+          <span class="finding-badge info">Riesgo Bajo</span>
+        </div>
+        <div class="finding-meta">
+          <span>Componente: app/noticia/[slug]/page.js (generateMetadata)</span>
+        </div>
+        <div class="finding-desc">
+          La función <code>generateMetadata</code> se encarga de servir las cabeceras Open Graph y de Twitter para previsualización social. Al no filtrar las noticias en base a su estado <code>publicado</code>, si alguien conoce o adivina el <code>slug</code> de una noticia borrador, el servidor generará y responderá exitosamente con los metadatos reales de la noticia (título, extracto, imagen), revelando información sensible antes del anuncio oficial.
+        </div>
+        <div class="finding-reco">
+          <div class="reco-title">
+            <span class="material-symbols-outlined" style="font-size:1rem;">verified_user</span>
+            Mitigación Sugerida
+          </div>
+          <div class="reco-content">
+            Añadir validación del estado de publicación en la función de generación de metadatos en <code>app/noticia/[slug]/page.js</code>:
+            <div class="code-block">if (!noticia || !noticia.publicado) {
+  return {
+    title: 'Noticia no encontrada | GaamaTV',
+    description: 'GaamaTV — El Lens Editorial del Oriente Antioqueño.',
+  }
+}</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <footer>
+      <p>© 2026 GaamaTV. Auditoría de Seguridad Automatizada. Desarrollado con Antigravity IDE.</p>
+    </footer>
   </div>
 
 </body>
