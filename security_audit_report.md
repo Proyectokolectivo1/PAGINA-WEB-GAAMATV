@@ -12,7 +12,12 @@ RIESGO TOTAL: MEDIO
 DEPLOY RECOMENDADO: SÍ
 
 🧩 DETALLES:
-- Archivo / Componente: `lib/supabase.js`
+- Archivo / Componente: `lib/supabase.js` (Función `extractYouTubeId`)
+- Descripción del problema: La función fue refactorada para ser extremadamente robusta usando expresiones regulares altamente restrictivas. No presenta riesgos de seguridad ni vulnerabilidades.
+- Nivel de riesgo: BAJO
+- Recomendación (NO aplicar cambios automáticamente): Ninguna, la función es totalmente segura.
+
+- Archivo / Componente: `lib/supabase.js` (Políticas de Base de Datos)
 - Descripción del problema: Las políticas RLS de Supabase actuales (`supabase-rls-secure.sql`) permiten la lectura pública incondicional (`USING (true)`) en la tabla `noticias`. Dado que `getNoticiaBySlug` ya no filtra del lado del SDK por `publicado = true` (para permitir que los flujos de administración obtengan la noticia completa independientemente de su estado), cualquiera con la API key de Supabase anónima (que es pública y está expuesta en el cliente) puede hacer una petición HTTP directa a la API de Supabase y descargar todos los borradores o noticias no publicadas.
 - Nivel de riesgo: MEDIO
 - Recomendación (NO aplicar cambios automáticamente): Actualizar la política RLS de SELECT en Supabase para la tabla `noticias` para restringir la visibilidad pública únicamente a los registros que estén publicados, a menos que el usuario esté autenticado.
