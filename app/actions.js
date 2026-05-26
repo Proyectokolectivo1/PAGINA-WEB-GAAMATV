@@ -15,6 +15,11 @@ export async function revalidateNoticiaCache(slug) {
   if (slug) {
     revalidatePath(`/noticia/${slug}`)
   }
+
+  // Revalidar el directorio de noticias completo para que las nuevas rutas
+  // dinámicas no sirvan versiones cacheadas obsoletas
+  revalidatePath('/noticia', 'page')
+
   // Revalidar también la página principal y el layout
   revalidatePath('/')
   revalidatePath('/', 'layout')

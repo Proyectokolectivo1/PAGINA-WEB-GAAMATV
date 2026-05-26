@@ -100,31 +100,38 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function NoticiaPage({ params }) {
-  const { slug } = await params
-
-  // Fetch de la noticia — getNoticiaBySlug returns null when not found (never throws)
-  const noticia = await getNoticiaCached(slug)
-
-  // Not found or unpublished (public page only shows published content)
-  if (!noticia || !noticia.publicado) notFound()
-
-  // Noticias relacionadas — NO lanzar 500 si falla (no-crítico)
-  let relacionadas = []
   try {
-    relacionadas = (await getNoticiasRelacionadas(noticia.id, noticia.categoria_id, 3)) || []
-  } catch {
-    relacionadas = []
+    const { slug } = await params
+
+    // Fetch de la noticia — getNoticiaBySlug returns null when not found (never throws)
+    const noticia = await getNoticiaCached(slug)
+
+    // Not found or unpublished (public page only shows published content)
+    if (!noticia || !noticia.publicado) notFound()
+
+    // Noticias relacionadas — NO lanzar 500 si falla (no-crítico)
+    let relacionadas = []
+    try {
+      relacionadas = (await getNoticiasRelacionadas(noticia.id, noticia.categoria_id, 3)) || []
+    } catch {
+      relacionadas = []
+    }
+
+    const youtubeId = extractYouTubeId(noticia.video_youtube_id)
+
+    return (
+      <>
+        <ViewTracker id={noticia.id} />
+        <ArticleContent noticia={noticia} youtubeId={youtubeId} />
+        <RelatedNews noticias={relacionadas} />
+      </>
+    )
+  } catch (err) {
+    // Safety net: any unhandled error (including React cache() propagation)
+    // should show 404 instead of crashing with 500.
+    console.error('[NoticiaPage] Unexpected error:', err)
+    notFound()
   }
-
-  const youtubeId = extractYouTubeId(noticia.video_youtube_id)
-
-  return (
-    <>
-      <ViewTracker id={noticia.id} />
-      <ArticleContent noticia={noticia} youtubeId={youtubeId} />
-      <RelatedNews noticias={relacionadas} />
-    </>
-  )
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
