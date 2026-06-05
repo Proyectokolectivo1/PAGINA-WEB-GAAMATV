@@ -32,6 +32,8 @@ export const metadata = {
 }
 
 
+import { Suspense } from 'react'
+
 export default function RootLayout({ children }) {
   return (
     <html lang="es" className="light">
@@ -50,12 +52,16 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="bg-background font-body text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
-        <Navbar />
+        <Suspense fallback={<div className="h-20 bg-stone-900 w-full" />}>
+          <Navbar />
+        </Suspense>
         <main className="pt-24 sm:pt-28 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 sm:pb-20">
           {children}
         </main>
         <Footer />
-        <LiveIndicator />
+        <Suspense fallback={null}>
+          <LiveIndicator />
+        </Suspense>
       </body>
     </html>
   )
