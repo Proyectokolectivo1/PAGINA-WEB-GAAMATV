@@ -2,6 +2,7 @@ import { getNoticias, getCategorias, getAnuncios, getFirmas, getRedesSociales } 
 import Link from 'next/link'
 import Image from 'next/image'
 import ImageWithFallback from './components/ImageWithFallback'
+import TwitchPlayer from './components/TwitchPlayer'
 
 export const revalidate = 60
 
@@ -70,6 +71,12 @@ export default async function Home({ searchParams }) {
 
   return (
     <div className="pb-12 pt-0 md:pt-4">
+      
+      {/* REPRODUCTOR DE TWITCH */}
+      {!categoria && !busqueda && (
+        <TwitchPlayer channel="gaamaproducciones" />
+      )}
+
       {/* SECCIÓN PRINCIPAL: 12 columnas */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
