@@ -1,94 +1,92 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function CustomTwitchPlayer({ channel }) {
   const [hostname, setHostname] = useState('')
-  const [isLive, setIsLive] = useState(false) // Iniciamos en falso, mostrando la pantalla premium
-  
+  const [isLive, setIsLive] = useState(null) // null = cargando, true = en vivo, false = offline
+
+  // Obtener el hostname del cliente (requerido por Twitch para el param "parent")
   useEffect(() => {
-    // Twitch requiere el hostname exacto sin puertos para el parámetro parent
     setHostname(window.location.hostname)
   }, [])
 
+  // Verificar si el canal está en vivo usando la API pública de Twitch GQL (sin auth key propia)
   useEffect(() => {
-    if (!hostname) return;
+    if (!channel) return
 
-    let embed = null;
-
-    const initTwitch = () => {
-      if (window.Twitch && window.Twitch.Embed) {
-        // Limpiamos el contenedor por si hay montajes dobles de React Strict Mode
-        const container = document.getElementById('twitch-embed-div');
-        if (container) container.innerHTML = '';
-        
-        embed = new window.Twitch.Embed('twitch-embed-div', {
-          width: '100%',
-          height: '100%',
-          channel: channel,
-          layout: 'video',
-          parent: [hostname],
-          muted: false,
-        });
-
-        embed.addEventListener(window.Twitch.Embed.VIDEO_READY, () => {
-          const player = embed.getPlayer();
-          if (player) {
-            player.addEventListener(window.Twitch.Player.ONLINE, () => setIsLive(true));
-            player.addEventListener(window.Twitch.Player.OFFLINE, () => setIsLive(false));
-            player.addEventListener(window.Twitch.Player.PLAYING, () => setIsLive(true));
-          }
-        });
+    const checkLiveStatus = async () => {
+      try {
+        // Llamamos a nuestra API interna de Next.js para evitar bloqueos CORS de Twitch
+        const res = await fetch(`/api/twitch-status?channel=${channel}`)
+        const json = await res.json()
+        setIsLive(!!(json?.live))
+      } catch (e) {
+        console.error('Error verificando estado de Twitch:', e)
+        setIsLive(false)
       }
-    };
-
-    if (!window.Twitch) {
-      const script = document.createElement('script');
-      script.setAttribute('src', 'https://embed.twitch.tv/embed/v1.js');
-      script.addEventListener('load', initTwitch);
-      document.body.appendChild(script);
-    } else {
-      initTwitch();
     }
 
-    return () => {
-      const container = document.getElementById('twitch-embed-div');
-      if (container) container.innerHTML = '';
-    }
-  }, [hostname, channel]);
+    checkLiveStatus()
+    const interval = setInterval(checkLiveStatus, 30000)
+    return () => clearInterval(interval)
+  }, [channel])
 
-  if (!hostname) return (
-    <div className="w-full aspect-video bg-stone-900 rounded-2xl flex items-center justify-center mb-8 animate-pulse">
-      <span className="text-white/50 font-bold">Cargando reproductor...</span>
-    </div>
-  )
+  // ─── Pantalla de carga inicial ────────────────────────────────────────────
+  if (!hostname || isLive === null) {
+    return (
+      <div className="w-full mb-10">
+        <div className="flex items-center gap-2 mb-4">
+          <span className="w-2.5 h-2.5 rounded-full bg-stone-400 animate-pulse"></span>
+          <h2 className="text-xl font-bold text-stone-900 font-headline uppercase tracking-widest">
+            Cargando GaamaTV...
+          </h2>
+        </div>
+        <div className="w-full aspect-video rounded-2xl bg-stone-900 animate-pulse" />
+      </div>
+    )
+  }
 
   return (
     <div className="w-full mb-10">
+      {/* Indicador de estado */}
       <div className="flex items-center gap-2 mb-4">
-         <span className={`w-2.5 h-2.5 rounded-full ${isLive ? 'bg-red-500 animate-pulse' : 'bg-stone-300'}`}></span>
-         <h2 className="text-xl font-bold text-stone-900 font-headline uppercase tracking-widest">
-           {isLive ? 'GaamaTV EN VIVO' : 'GaamaTV (Desconectado)'}
-         </h2>
+        <span
+          className={`w-2.5 h-2.5 rounded-full ${
+            isLive ? 'bg-red-500 animate-pulse' : 'bg-stone-400'
+          }`}
+        />
+        <h2 className="text-xl font-bold text-stone-900 font-headline uppercase tracking-widest">
+          {isLive ? 'GaamaTV EN VIVO' : 'GaamaTV (Desconectado)'}
+        </h2>
       </div>
+
+      {/* Contenedor del player */}
       <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border-4 border-stone-100 bg-stone-900">
-        
-        {/* Placeholder Offline Personalizado */}
-        {!isLive && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 bg-gradient-to-br from-stone-900 to-black z-20">
-             <span className="material-symbols-outlined text-[80px] text-stone-700 mb-6 block">videocam_off</span>
-             <h3 className="text-white text-3xl font-bold font-headline mb-3">Transmisión Inactiva</h3>
-             <p className="text-stone-400 text-lg max-w-md">
-               No estamos transmitiendo en vivo en este momento. Sigue leyendo nuestras últimas noticias y vuelve pronto.
-             </p>
+
+        {isLive ? (
+          /* ── EN VIVO: iframe directo de Twitch ─────────────────────────── */
+          <iframe
+            src={`https://player.twitch.tv/?channel=${channel}&parent=${hostname}&autoplay=true`}
+            allowFullScreen
+            className="absolute inset-0 w-full h-full border-0"
+            title={`${channel} en Twitch`}
+          />
+        ) : (
+          /* ── OFFLINE: banner personalizado ─────────────────────────────── */
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8 bg-gradient-to-br from-stone-900 to-black">
+            <span className="material-symbols-outlined text-[80px] text-stone-700 mb-6 block">
+              videocam_off
+            </span>
+            <h3 className="text-white text-3xl font-bold font-headline mb-3">
+              Transmisión Inactiva
+            </h3>
+            <p className="text-stone-400 text-lg max-w-md">
+              No estamos transmitiendo en vivo en este momento. Sigue leyendo nuestras
+              últimas noticias y vuelve pronto.
+            </p>
           </div>
         )}
-
-        {/* Contenedor del Reproductor de Twitch */}
-        <div 
-          id="twitch-embed-div" 
-          className={`w-full h-full ${isLive ? 'opacity-100 z-10 relative' : 'opacity-0 absolute -z-10'}`} 
-        />
       </div>
     </div>
   )

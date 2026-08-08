@@ -35,8 +35,8 @@ const nextConfig = {
       style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
       font-src 'self' https://fonts.gstatic.com;
       img-src 'self' data: https: blob:;
-      frame-src 'self' https://www.youtube.com https://drive.google.com https://*.google.com;
-      connect-src 'self' https://*.supabase.co https://*.googleapis.com ${isDev ? "ws: wss:" : ""}
+      frame-src 'self' https://www.youtube.com https://drive.google.com https://*.google.com https://player.twitch.tv https://embed.twitch.tv;
+      connect-src 'self' https://*.supabase.co https://*.googleapis.com https://gql.twitch.tv https://*.twitch.tv https://*.twitchsvc.net ${isDev ? "ws: wss:" : ""}
     `.replace(/\s{2,}/g, ' ').trim();
 
     return [

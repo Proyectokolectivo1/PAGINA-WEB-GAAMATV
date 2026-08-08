@@ -7,7 +7,7 @@ import LiveIndicator from './components/LiveIndicator'
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://gaamatv.vercel.app'),
   title: {
-    default: 'GaamaTV | El Lens Editorial del Oriente Antioqueño',
+    default: 'GaamaTV | El Lente Editorial del Oriente Antioqueño',
     template: '%s | GaamaTV',
   },
   description: 'Tu fuente de noticias del Oriente Antioqueño. Información local, regional y nacional.',

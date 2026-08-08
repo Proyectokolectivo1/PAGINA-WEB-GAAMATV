@@ -63,6 +63,7 @@
       font-size: 3.5rem;
       background: linear-gradient(135deg, #3b82f6, #8b5cf6);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
       margin-bottom: 1rem;
       display: inline-block;
@@ -77,6 +78,7 @@
       letter-spacing: -0.025em;
       background: linear-gradient(to right, #f8fafc, #cbd5e1);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
       margin-bottom: 0.5rem;
     }
@@ -293,6 +295,7 @@
     .section-title span {
       background: linear-gradient(135deg, #3b82f6, #8b5cf6);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
@@ -499,8 +502,8 @@
       <div class="material-symbols-outlined shield-icon">shield_with_heart</div>
       <h1>GAAMATV SECURITY AUDIT DASHBOARD</h1>
       <div class="meta-subtitle">
-        <span><i class="material-symbols-outlined" style="font-size:1rem;">calendar_month</i> 25 de Mayo, 2026</span>
-        <span><i class="material-symbols-outlined" style="font-size:1rem;">fingerprint</i> Auditor: Antigravity v3.5</span>
+        <span><i class="material-symbols-outlined" style="font-size:1rem;">calendar_month</i> 8 de Agosto, 2026</span>
+        <span><i class="material-symbols-outlined" style="font-size:1rem;">fingerprint</i> Auditor: Antigravity v4.0</span>
         <span><i class="material-symbols-outlined" style="font-size:1rem;">published_with_changes</i> Estado: Pre-Deploy</span>
       </div>
     </header>
@@ -509,7 +512,7 @@
     <div class="risk-banner">
       <div class="risk-info">
         <h2>Reporte General de Vulnerabilidades</h2>
-        <p>Análisis exhaustivo del código de visualización de noticias y configuración de clientes.</p>
+        <p>Análisis exhaustivo del código de visualización de noticias, API proxy de Twitch y CSP.</p>
       </div>
       <div class="risk-badges">
         <div class="risk-badge">
@@ -535,27 +538,27 @@
 🔐 Base de Datos Supabase: MEDIO
 🔐 Arquitectura: OK
 🔐 Autenticación / Autorización: MEDIO
-🔐 APIs / Functions: OK
+🔐 APIs / Functions: BAJO
 🔐 Dependencias: OK
 
 RIESGO TOTAL: MEDIO
 DEPLOY RECOMENDADO: SÍ
 
 🧩 DETALLES:
-- Archivo / Componente: `lib/supabase.js` (Función `extractYouTubeId`)
-- Descripción del problema: La función fue refactorada para ser extremadamente robusta usando expresiones regulares altamente restrictivas. No presenta riesgos de seguridad ni vulnerabilidades.
-- Nivel de riesgo: BAJO
-- Recomendación (NO aplicar cambios automáticamente): Ninguna, la función es totalmente segura.
-
 - Archivo / Componente: `lib/supabase.js` (Políticas de Base de Datos)
-- Descripción del problema: Las políticas RLS de Supabase actuales (`supabase-rls-secure.sql`) permiten la lectura pública incondicional (`USING (true)`) en la tabla `noticias`. Dado que `getNoticiaBySlug` ya no filtra en el cliente por `publicado = true` para permitir que el administrador previsualice artículos antes del deploy, un tercero con la anon key puede consultar la API REST de Supabase directamente para leer borradores y noticias privadas.
-- Nivel de riesgo: MEDIO
-- Recomendación: Restringir la política SELECT en Supabase para noticias a: `publicado = true OR auth.role() = 'authenticated'`
+  - Descripción del problema: Las políticas RLS de Supabase actuales permiten la lectura pública incondicional (`USING (true)`) en noticias. Dado que `getNoticiaBySlug` no filtra por publicado en el cliente, cualquiera con la anon key puede hacer peticiones HTTP directas y bajar borradores.
+  - Nivel de riesgo: MEDIO
+  - Recomendación: Restringir SELECT en Supabase a: `publicado = true OR auth.role() = 'authenticated'`
 
-- Archivo / Componente: `app/noticia/[slug]/page.js`
-- Descripción del problema: La Server Action y metadatos `generateMetadata` devuelven información para noticias no publicadas. Un tercero podría descubrir metadatos de borradores.
-- Nivel de riesgo: BAJO
-- Recomendación: Implementar un guard check `if (!noticia || !noticia.publicado)` en `generateMetadata`.</div>
+- Archivo / Componente: `app/noticia/[slug]/page.js` (generateMetadata)
+  - Descripción del problema: `generateMetadata` no valida si el artículo está publicado antes de generar tags meta OG/Twitter, pudiendo divulgar borradores si se conoce el slug.
+  - Nivel de riesgo: BAJO
+  - Recomendación: Tratar no publicadas como inexistentes en `generateMetadata`.
+
+- Archivo / Componente: `app/api/twitch-status/route.js` (Proxy Twitch)
+  - Descripción del problema: El parámetro `channel` se interpola directamente en la query GQL sin sanitización previa, pudiendo causar GraphQL injection o query errors con caracteres maliciosos.
+  - Nivel de riesgo: BAJO
+  - Recomendación: Validar `channel` con expresión regular `^[a-zA-Z0-9_]{4,25}$`.</div>
 
     <!-- Executive Grid -->
     <div class="status-grid">
@@ -566,7 +569,7 @@ DEPLOY RECOMENDADO: SÍ
         </div>
         <div>
           <div class="status-card-val ok">OK</div>
-          <div class="status-card-desc">No hay API Keys ni secretos harcodeados. Uso correcto de variables .env.</div>
+          <div class="status-card-desc">No hay API Keys privadas expuestas en frontend. Uso seguro de variables de entorno.</div>
         </div>
       </div>
 
@@ -588,7 +591,7 @@ DEPLOY RECOMENDADO: SÍ
         </div>
         <div>
           <div class="status-card-val warn">MEDIO</div>
-          <div class="status-card-desc">Políticas SELECT permisivas permiten filtrado público libre en noticias.</div>
+          <div class="status-card-desc">Políticas SELECT permisivas en tabla de noticias permiten lectura de borradores vía REST.</div>
         </div>
       </div>
 
@@ -599,7 +602,7 @@ DEPLOY RECOMENDADO: SÍ
         </div>
         <div>
           <div class="status-card-val ok">OK</div>
-          <div class="status-card-desc">Estructura Next.js Server-Side correcta. Enrutamiento dinámico optimizado.</div>
+          <div class="status-card-desc">Correcto desacoplamiento. Nueva API route proxy de Twitch evita CORS en frontend.</div>
         </div>
       </div>
     </div>
@@ -611,38 +614,12 @@ DEPLOY RECOMENDADO: SÍ
         <span>Hallazgos Específicos & Mitigaciones</span>
       </div>
 
-      <!-- Finding 1 (Refactored) -->
-      <div class="finding-item severity-ok">
-        <div class="finding-header">
-          <div class="finding-title">
-            <span class="material-symbols-outlined" style="color: var(--color-ok)">verified_user</span>
-            Función robusta de extracción de YouTube ID
-          </div>
-          <span class="finding-badge ok">Riesgo Bajo</span>
-        </div>
-        <div class="finding-meta">
-          <span>Componente: lib/supabase.js | Función: extractYouTubeId</span>
-        </div>
-        <div class="finding-desc">
-          La función de extracción de identificadores de videos de YouTube fue actualizada para ser extremadamente robusta, usando expresiones regulares estrictas y seguras. No presenta riesgos de seguridad.
-        </div>
-        <div class="finding-reco">
-          <div class="reco-title">
-            <span class="material-symbols-outlined" style="font-size:1rem;">verified_user</span>
-            Estado actual
-          </div>
-          <div class="reco-content">
-            Verificado y totalmente seguro. La entrada de datos está sanitizada contra inyecciones y expresiones maliciosas.
-          </div>
-        </div>
-      </div>
-
-      <!-- Finding 2 -->
+      <!-- Finding 1 -->
       <div class="finding-item severity-warn">
         <div class="finding-header">
           <div class="finding-title">
             <span class="material-symbols-outlined" style="color: var(--color-warn)">warning</span>
-            Lectura Pública Incondicional de Borradores
+            Lectura Pública de Borradores vía API Supabase
           </div>
           <span class="finding-badge warn">Riesgo Medio</span>
         </div>
@@ -650,7 +627,7 @@ DEPLOY RECOMENDADO: SÍ
           <span>Componente: lib/supabase.js | Tabla: noticias</span>
         </div>
         <div class="finding-desc">
-          Al remover el filtro de <code>publicado = true</code> en el cliente de base de datos para corregir errores de renderizado en el panel de administrador, toda la lógica de filtrado de noticias publicadas pasó al Frontend de Next.js en <code>app/noticia/[slug]/page.js</code>. Si bien esto soluciona el problema de visualización del administrador, la tabla <code>noticias</code> tiene una política RLS de SELECT configurada como <code>TO public USING (true)</code>. Esto permite que cualquier usuario descargue directamente borradores enviando queries HTTP REST directamente al endpoint de Supabase usando la clave anónima del frontend.
+          Al remover el filtro de <code>publicado = true</code> en el cliente de base de datos para corregir previsualizaciones del administrador, toda la lógica de filtrado pasó al frontend. Con la política RLS actual habilitando SELECT incondicional a la red pública (<code>USING (true)</code>), cualquiera con la clave anónima puede extraer borradores consultando directamente la API REST de Supabase.
         </div>
         <div class="finding-reco">
           <div class="reco-title">
@@ -658,7 +635,7 @@ DEPLOY RECOMENDADO: SÍ
             Mitigación Sugerida (Aplicar en Supabase SQL)
           </div>
           <div class="reco-content">
-            Actualizar la regla RLS para la tabla <code>noticias</code> de modo que la lectura pública solo se permita si el artículo ya está publicado, o si el solicitante es un usuario autenticado (administrador):
+            Actualizar la política RLS de lectura en Supabase:
             <div class="code-block">DROP POLICY IF EXISTS "select_public_noticias" ON noticias;
 CREATE POLICY "select_public_noticias" ON noticias 
   FOR SELECT TO public 
@@ -667,7 +644,7 @@ CREATE POLICY "select_public_noticias" ON noticias
         </div>
       </div>
 
-      <!-- Finding 3 -->
+      <!-- Finding 2 -->
       <div class="finding-item severity-ok">
         <div class="finding-header">
           <div class="finding-title">
@@ -680,7 +657,7 @@ CREATE POLICY "select_public_noticias" ON noticias
           <span>Componente: app/noticia/[slug]/page.js (generateMetadata)</span>
         </div>
         <div class="finding-desc">
-          La función <code>generateMetadata</code> se encarga de servir las cabeceras Open Graph y de Twitter para previsualización social. Al no filtrar las noticias en base a su estado <code>publicado</code>, si alguien conoce o adivina el <code>slug</code> de una noticia borrador, el servidor generará y responderá exitosamente con los metadatos reales de la noticia (título, extracto, imagen), revelando información sensible antes del anuncio oficial.
+          La función <code>generateMetadata</code> no valida si la noticia recuperada está publicada, sirviendo información social (título, descripción, imagen de portada) de borradores si se conoce el slug.
         </div>
         <div class="finding-reco">
           <div class="reco-title">
@@ -688,12 +665,41 @@ CREATE POLICY "select_public_noticias" ON noticias
             Mitigación Sugerida
           </div>
           <div class="reco-content">
-            Añadir validación del estado de publicación en la función de generación de metadatos en <code>app/noticia/[slug]/page.js</code>:
+            Validar el estado de publicación en la generación de metadatos:
             <div class="code-block">if (!noticia || !noticia.publicado) {
   return {
     title: 'Noticia no encontrada | GaamaTV',
-    description: 'GaamaTV — El lente editorial del Oriente Antioqueño.',
+    description: 'GaamaTV — El Lente Editorial del Oriente Antioqueño.',
   }
+}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Finding 3 -->
+      <div class="finding-item severity-ok">
+        <div class="finding-header">
+          <div class="finding-title">
+            <span class="material-symbols-outlined" style="color: #60a5fa">info</span>
+            Falta de Sanitización en Parámetro de Canal Twitch
+          </div>
+          <span class="finding-badge info">Riesgo Bajo</span>
+        </div>
+        <div class="finding-meta">
+          <span>Componente: app/api/twitch-status/route.js (API Proxy)</span>
+        </div>
+        <div class="finding-desc">
+          El parámetro de consulta <code>channel</code> se interpola directamente en el string de query de GraphQL para consultar la API de Twitch. Si el parámetro contiene comillas dobles o caracteres extraños, podría interferir con la estructura de la consulta GraphQL (inyección de GraphQL) o generar fallos de análisis de sintaxis en el servidor remoto de Twitch.
+        </div>
+        <div class="finding-reco">
+          <div class="reco-title">
+            <span class="material-symbols-outlined" style="font-size:1rem;">verified_user</span>
+            Mitigación Sugerida
+          </div>
+          <div class="reco-content">
+            Implementar validación estricta por expresión regular antes de procesar la solicitud:
+            <div class="code-block">if (!channel || !/^[a-zA-Z0-9_]{4,25}$/.test(channel)) {
+  return Response.json({ live: false, error: 'canal inválido' }, { status: 400 })
 }</div>
           </div>
         </div>

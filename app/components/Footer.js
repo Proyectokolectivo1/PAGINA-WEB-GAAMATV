@@ -126,7 +126,7 @@ export default function Footer() {
             </span>
             <span className="flex items-center gap-2 hover:text-primary transition-colors">
               <span className="material-symbols-outlined text-base">mail</span> 
-              <span>contacto@gaamatv.com</span>
+              <span>gaamaproducciones@gmail.com</span>
             </span>
           </div>
         </div>
